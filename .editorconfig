@@ -1,0 +1,23 @@
+# See docs/conventions/code-style.md. Kept minimal on purpose: the only
+# settings here are the ones that actually break something when they drift.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# OpenSCAD source: 4 spaces, and a generous line length -- this project's
+# convention is heavily commented source (see docs/conventions/code-style.md).
+[*.scad]
+max_line_length = 100
+
+[*.{ps1,bat,cmd}]
+end_of_line = crlf
+
+[*.{md,json,yml,yaml}]
+indent_size = 2
+trim_trailing_whitespace = false

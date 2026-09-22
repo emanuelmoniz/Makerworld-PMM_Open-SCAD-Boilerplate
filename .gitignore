@@ -1,0 +1,52 @@
+# ============================================================
+# <PROJECT NAME>  |  Ignore rules
+# ------------------------------------------------------------
+# WHAT IS DELIBERATELY *NOT* IGNORED, and why (see docs/conventions/
+# repo-hygiene.md for the full reasoning -- change these only on purpose):
+#
+#   dist/<project>_makerworld.scad  TRACKED. It is the artifact you upload
+#                                   to MakerWorld. Tracking it means the
+#                                   exact file a given release shipped is
+#                                   recoverable from git history.
+#   dist/makerworld_listing.md      TRACKED and HAND-WRITTEN (the only
+#                                   hand-maintained file in dist/).
+#   renders/, stl/, printables/     TRACKED. They are published assets that
+#                                   accompany a MakerWorld listing, not
+#                                   throwaway build output.
+#   .build/ (e.g. plates.json)      NOT tracked (see below) -- regenerated
+#                                   on every build/export run from
+#                                   scripts/plates_config.sh, so tracking
+#                                   it only produces diff churn.
+# ============================================================
+
+# ---- Generated intermediates (regenerated every run, in any project) ----
+.build/
+
+# ---- Local dev bundle ---------------------------------------------------
+# Unlike the MakerWorld bundle, this one is a throwaway convenience for
+# opening the whole project in OpenSCAD as a single file. Nothing ships it.
+**/dist/*_dev.scad
+
+# ---- Agent / editor workspace state -------------------------------------
+.claude/
+.vscode/
+*.code-workspace.local
+
+# ---- Python ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ---- OpenSCAD / slicer scratch -----------------------------------------
+*.stl.tmp
+*.bak
+.*.scad.backup
+*.csg
+
+# ---- OS junk -----------------------------------------------------------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+._*

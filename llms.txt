@@ -1,0 +1,34 @@
+# MakerWorld PMM OpenSCAD Boilerplate
+
+> A GitHub template and reference library for parametric OpenSCAD models published through
+> MakerWorld's Parametric Model Maker (PMM). It contains a multi-file source layout, a build that
+> flattens it into the single .scad PMM accepts, a PMM compatibility lint, render and Bambu 3MF
+> pipelines, agent directives, and a snapshot of PMM's installed-library and font inventories.
+
+Agents: start with AGENTS.md (rules and commands), then docs/INDEX.md (doc map and read order).
+
+## Rules and entry points
+- [AGENTS.md](AGENTS.md): canonical agent instructions, standing directives, folder layout, commands
+- [docs/INDEX.md](docs/INDEX.md): every doc, what it answers, when to read it
+- [docs/START-HERE.md](docs/START-HERE.md): what the boilerplate is and how to start a project
+
+## PMM reference
+- [docs/pmm/specification.md](docs/pmm/specification.md): PMM API surface (mw_plate_N, mw_assembly_view, customizer syntax, colors, fonts, uploads, backend)
+- [docs/pmm/compatibility-rules.md](docs/pmm/compatibility-rules.md): rules with IDs matching the lint (P01-P12), limits, gotchas
+- [docs/pmm/sources.md](docs/pmm/sources.md): where every claim comes from, with evidence levels and endpoint URLs
+- [docs/pmm/data/](docs/pmm/data/): installed fonts, display font catalog, and bundled libraries (JSON snapshots)
+
+## OpenSCAD and conventions
+- [docs/openscad/customizer-syntax.md](docs/openscad/customizer-syntax.md): parameter annotation syntax
+- [docs/openscad/libraries-and-fonts.md](docs/openscad/libraries-and-fonts.md): BOSL2, name collisions, fonts
+- [docs/conventions/geometry.md](docs/conventions/geometry.md): origin, clearances, manifold safety
+- [docs/conventions/source-architecture.md](docs/conventions/source-architecture.md): include vs use, params, bundle order
+- [docs/conventions/naming.md](docs/conventions/naming.md): files, modules, parameters
+
+## Toolchain and workflows
+- [docs/toolchain/pipelines.md](docs/toolchain/pipelines.md): the build, dev, render, 3MF and check pipelines
+- [docs/toolchain/setup.md](docs/toolchain/setup.md): installing OpenSCAD, Python, Git Bash, Bambu Studio, BOSL2, fonts
+- [docs/workflows/](docs/workflows/): new project, add a part, add a parameter, release, publish
+
+## Optional
+- [examples/demo/](examples/demo/): a runnable two-part example project (sliding-lid box)

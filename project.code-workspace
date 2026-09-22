@@ -1,0 +1,33 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.scad": "scad",
+			"*_config.sh": "shellscript"
+		},
+		"files.eol": "\n",
+		"[bat]": { "files.eol": "\r\n" },
+		"[powershell]": { "files.eol": "\r\n" },
+		"files.exclude": {
+			".build": true,
+			"**/__pycache__": true
+		},
+		"search.exclude": {
+			"dist/*.scad": true,
+			"docs/pmm/data/*.json": true
+		}
+	},
+	"extensions": {
+		"recommendations": [
+			"Leathong.openscad-language-support",
+			"EditorConfig.EditorConfig",
+			"timonwong.shellcheck",
+			"ms-vscode.powershell",
+			"ms-python.python"
+		]
+	}
+}

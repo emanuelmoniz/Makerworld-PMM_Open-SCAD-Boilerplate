@@ -1,0 +1,32 @@
+# ============================================================
+# <PROJECT NAME>  |  Line-ending and diff rules
+# ------------------------------------------------------------
+# This project mixes THREE shells on one machine (see
+# docs/toolchain/platform-contract.md):
+#   - .sh  run by Git Bash  -> MUST be LF. A CRLF shebang line makes bash
+#          fail with the notorious "bad interpreter: /bin/bash^M".
+#   - .ps1 run by PowerShell -> CRLF is safest on Windows PowerShell 5.1.
+#   - .bat run by cmd.exe    -> MUST be CRLF. cmd mis-parses LF-only
+#          batch files (labels/goto in particular).
+# Without these rules a clone on a differently-configured machine silently
+# breaks one of the three. Do not remove.
+# ============================================================
+* text=auto
+
+*.sh    text eol=lf
+*.py    text eol=lf
+*.ps1   text eol=crlf
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+*.scad  text eol=lf
+*.md    text eol=lf
+*.json  text eol=lf
+
+# Binary assets -- never line-ending-converted, never diffed as text.
+*.stl   binary
+*.3mf   binary
+*.png   binary
+*.jpg   binary
+*.ttf   binary
+*.otf   binary

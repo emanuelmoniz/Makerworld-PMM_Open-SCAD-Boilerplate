@@ -1,0 +1,8 @@
+{
+  "fetched_utc": "2026-09-22T14:01:07Z",
+  "sources": {
+    "libraries.json": "https://makerworld.bblmw.com/makerworld/makerlab/content-generator/openscad/libraries-0.8.0.json",
+    "fonts-installed.json": "https://makerworld.bblmw.com/makerworld/makerlab/content-generator/openscad/fonts-0.8.0.json",
+    "fonts-catalog.json": "https://makerworld.bblmw.com/makerworld/makerlab/content-generator/openscad/fonts-show-0.0.1.json"
+  }
+}

@@ -1,0 +1,62 @@
+# ============================================================
+# CI: build the bundles, verify the tracked bundle is current, lint + smoke
+# ------------------------------------------------------------
+# Runs on Ubuntu with pwsh (PowerShell 7) for the builds and bash for the
+# checks -- the same scripts you run locally (docs/toolchain/platform-contract.md).
+# BOSL2 is checked out at the commit PMM uses so includes resolve and the
+# lint's BOSL2 name-collision rule (P09) runs.
+# Deterministic because MW_PLATE_SIZE is explicit in scripts/plates_config.sh
+# (no Bambu Studio on the runner).
+# ============================================================
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [".", "examples/demo"]
+    env:
+      CI: "1"
+      OPENSCADPATH: ${{ github.workspace }}/.ci/libraries
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip examples when they were deleted
+        id: exists
+        run: |
+          if [ -f "${{ matrix.project }}/scripts/project_config.sh" ]; then echo "run=true" >> "$GITHUB_OUTPUT"; else echo "run=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Install OpenSCAD
+        if: steps.exists.outputs.run == 'true'
+        run: sudo apt-get update && sudo apt-get install -y openscad
+
+      - name: Check out BOSL2 at the PMM commit
+        if: steps.exists.outputs.run == 'true'
+        run: |
+          git clone --quiet https://github.com/BelfrySCAD/BOSL2.git "$OPENSCADPATH/BOSL2"
+          git -C "$OPENSCADPATH/BOSL2" checkout --quiet 99fcfc6867e739aa1cd8ffc49fe39276036681f1
+
+      - name: Build MakerWorld + dev bundles
+        if: steps.exists.outputs.run == 'true'
+        shell: pwsh
+        run: |
+          ./scripts/build/build.ps1 -Project "${{ matrix.project }}"
+          ./scripts/build/dev_build.ps1 -Project "${{ matrix.project }}"
+
+      - name: Tracked bundle is up to date
+        if: steps.exists.outputs.run == 'true'
+        run: |
+          if ! git diff --exit-code -- "${{ matrix.project }}/dist/"*_makerworld.scad; then
+            echo "::error::dist/ bundle is stale -- run the MakerWorld build and commit the result."
+            exit 1
+          fi
+
+      - name: Lint + smoke
+        if: steps.exists.outputs.run == 'true'
+        run: bash scripts/check/check.sh -p "${{ matrix.project }}"
