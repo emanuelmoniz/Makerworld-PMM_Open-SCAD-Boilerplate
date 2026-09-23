@@ -20,6 +20,7 @@
 #   "parts/foo.scad"                                   plain
 #   "parts/foo.scad|enable_support=1;wall_loops=3"     per-part overrides
 #   "parts/foo.scad|auto_orient=1"                     per-part auto-orient
+#   "parts/foo.scad|multicolor=1"                      one filament per color region
 #
 # Usage: generate_plates_json.py <plates_config.sh> <plates.json>
 # ============================================================
@@ -45,6 +46,9 @@ def parse_part_entry(entry):
             continue
         if kv == "auto_orient=1":
             part["auto_orient"] = True
+            continue
+        if kv == "multicolor=1":
+            part["multicolor"] = True
             continue
         if "=" in kv:
             key, value = kv.split("=", 1)

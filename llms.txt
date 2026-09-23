@@ -28,7 +28,7 @@ Agents: start with AGENTS.md (rules and commands), then docs/INDEX.md (doc map a
 ## Toolchain and workflows
 - [docs/toolchain/pipelines.md](docs/toolchain/pipelines.md): the build, dev, render, 3MF and check pipelines
 - [docs/toolchain/setup.md](docs/toolchain/setup.md): installing OpenSCAD, Python, Git Bash, Bambu Studio, BOSL2, fonts
-- [docs/workflows/](docs/workflows/): new project, add a part, add a parameter, release, publish
+- [docs/workflows/](docs/workflows/): new project, add a part, add a parameter, multicolor, release, publish
 
 ## Optional
 - [examples/demo/](examples/demo/): a runnable two-part example project (sliding-lid box)

@@ -107,9 +107,11 @@ ratios. **Agents never render unless asked** (AGENTS.md).
 `scripts\export_3mf.bat` · `scripts/export/export_3mf.sh [-p dir] [-c config]` → `OUTPUT`
 
 1. Resolve `PRINTER`'s real bed (`printer_bed.py` walks Bambu's preset inheritance).
-2. Per plate: export each part to STL. Optionally auto-orient one part (`|auto_orient=1`) or the
-   whole plate. Arrange with Bambu Studio's CLI `--arrange=1` inside the real bed, passing
-   `--enable-support` because it changes arrange spacing.
+2. Per plate: export each part to STL — or, for a part marked `|multicolor=1`, to a Bambu object
+   with one part per color region, each on its own filament
+   ([multicolor](../workflows/multicolor.md)). Optionally auto-orient one part
+   (`|auto_orient=1`) or the whole plate. Arrange with Bambu Studio's CLI `--arrange=1` inside the
+   real bed, passing `--enable-support` because it changes arrange spacing.
 3. If `ASSEMBLY_PLATE_VIEWS` is set, add the **assembly preview** as the last plate
    (`ASSEMBLY_PLATE_NAME`, default `_preview assembly DO NOT PRINT`), so plates 1..N still match
    `mw_plate_1()`..`mw_plate_N()`. It's rendered as one object from the freshly rebuilt dev bundle

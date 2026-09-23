@@ -70,7 +70,11 @@ PLATE_1_PARTS=(
     "parts/box_body.scad"
 )
 PLATE_2_PARTS=(
-    "parts/sliding_lid.scad"
+    # multicolor: lid body on filament 1, embossed label on filament 2.
+    # The regions are the top-level children of parts/sliding_lid.scad and
+    # their colors are mapped to slots by FILAMENT_MAP in
+    # scripts/export_3mf_config.sh. -> docs/workflows/multicolor.md
+    "parts/sliding_lid.scad|multicolor=1"
 )
 PLATE_1_ARRANGE=true
 PLATE_2_ARRANGE=true

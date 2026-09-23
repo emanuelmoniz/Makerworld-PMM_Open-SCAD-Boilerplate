@@ -44,6 +44,27 @@ FACE_DETAIL_FS=0.4
 # As..., save it over this path (keep PRINTER in plates_config.sh matching).
 REFERENCE_3MF="scripts/export/base_settings.3mf"
 
+# ---- 3b. FILAMENT MAP (multicolor parts only) -----------------------------
+# Which AMS slot each COLOR in the model prints in: "<hex>=<slot>", slots
+# 1-based, matching REFERENCE_3MF's filament order (its filament_colour --
+# `python scripts/export/list_settings.py --grep filament_colour`).
+#
+# Only parts marked `multicolor=1` in plates_config.sh consult this; leave it
+# empty for a single-color project. The hex is the color OpenSCAD actually
+# exported, so named colors (color("SteelBlue")) work too -- run the export
+# once and it lists the colors it found, ready to paste in here. A color the
+# export finds and this map doesn't have aborts the export rather than
+# guessing a slot.
+#
+# REFERENCE_3MF must already have that many filaments: slots cannot be added
+# here (a synthesized slot crashes Bambu Studio). Load them in the GUI, save
+# the project, point REFERENCE_3MF at it.
+# See: docs/workflows/multicolor.md
+FILAMENT_MAP=(
+    # "#1A2F4A=1"
+    # "#E67E22=2"
+)
+
 # ---- 4. GLOBAL PRINT-SETTING OVERRIDES ------------------------------------
 # "key=value" entries applied on top of REFERENCE_3MF for every plate. Keys
 # must already exist in REFERENCE_3MF (unknown keys abort the export).

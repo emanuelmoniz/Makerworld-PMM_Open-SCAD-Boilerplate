@@ -129,6 +129,11 @@ The full rationale is in the linked docs. These are the ones that fail silently.
   display catalog. `// preview[...]` doesn't work in PMM. → [specification](docs/pmm/specification.md)
 - **Never call `mw_plate_N()` or `mw_assembly_view()` yourself.** PMM calls them. Shared geometry
   goes in neutral helper modules.
+- **A multicolor part is one module per color, called as separate top-level children** in its
+  `BUILD:EXCLUDE` block, plus `multicolor=1` in `plates_config.sh` and a `FILAMENT_MAP` entry per
+  color. Each region's `color()` must wrap the whole region: a `color()` inside a `difference()`
+  leaves the cut faces uncolored and the export rejects the part. MakerWorld is unaffected either
+  way. → [multicolor](docs/workflows/multicolor.md)
 - **An assembled view "<name>" is three things:** `module assembly_<name>()`, a matching
   `function assembly_<name>_footprint()` (its XY box, used to lay the MakerWorld preview out),
   and a branch in both dispatchers `assembly_view()` / `assembly_view_footprint()`. Share formulas

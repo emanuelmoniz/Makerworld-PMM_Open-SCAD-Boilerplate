@@ -54,6 +54,7 @@
 | [workflows/new-project.md](workflows/new-project.md) | Template → your project, green build |
 | [workflows/add-a-part.md](workflows/add-a-part.md) | New printed part, placed and validated |
 | [workflows/add-a-parameter.md](workflows/add-a-parameter.md) | New or changed customizer parameter |
+| [workflows/multicolor.md](workflows/multicolor.md) | A part that prints in several filaments, in the Bambu 3MF export |
 | [workflows/release.md](workflows/release.md) | Tagged version with consistent docs and assets |
 | [workflows/publish-to-makerworld.md](workflows/publish-to-makerworld.md) | Upload, verify on PMM, update the listing |
 

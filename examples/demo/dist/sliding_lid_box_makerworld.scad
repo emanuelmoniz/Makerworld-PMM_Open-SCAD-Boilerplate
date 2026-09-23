@@ -118,11 +118,12 @@ module box_body() {
 }
 
 // ---- from parts/sliding_lid.scad ----
-module sliding_lid() {
-    label_center = [lid_length / 2, lid_width / 2];
+function sliding_lid_label_center() = [lid_length / 2, lid_width / 2];
+module sliding_lid_body() {
+    label_center = sliding_lid_label_center();
+    color("#1a2f4a") 
     difference() {
-        color("#1a2f4a") 
-            cube([lid_length, lid_width, lid_thickness]);
+        cube([lid_length, lid_width, lid_thickness]);
         translate([lid_length - notch_radius / 2, lid_width / 2, lid_thickness])
             scale([1, 1, 0.5])
                 sphere(r = notch_radius);
@@ -130,10 +131,17 @@ module sliding_lid() {
             translate([label_center[0], label_center[1], lid_thickness - label_depth])
                 label_solid(label_text, label_size, label_font, label_depth + 1);
     }
+}
+module sliding_lid_label() {
+    label_center = sliding_lid_label_center();
     if (label_style == "embossed")
         color(label_color)
             translate([label_center[0], label_center[1], lid_thickness - 0.01])
                 label_solid(label_text, label_size, label_font, label_depth + 0.01);
+}
+module sliding_lid() {
+    sliding_lid_body();
+    sliding_lid_label();
 }
 
 // ---- from assembly/assembly_main.scad ----

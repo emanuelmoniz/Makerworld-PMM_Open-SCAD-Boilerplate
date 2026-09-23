@@ -10,9 +10,11 @@
 # Steps:
 #   1. plates_config.sh -> .build/plates.json (shared generator) -> bash vars
 #   2. resolve the real bed of PRINTER from Bambu presets (printer_bed.py)
-#   3. per plate: export each part to STL (OpenSCAD); optionally auto-orient
-#      a single part or the whole plate; arrange the plate with Bambu
-#      Studio's own `--arrange=1` inside the real bed
+#   3. per plate: export each part to STL (OpenSCAD) -- or, for a part marked
+#      `multicolor=1`, to a Bambu multi-part object with one filament per
+#      color region (multicolor_3mf.py); optionally auto-orient a single part
+#      or the whole plate; arrange the plate with Bambu Studio's own
+#      `--arrange=1` inside the real bed
 #   4. if ASSEMBLY_PLATE_VIEWS is set (plates_config.sh section 3): add the
 #      assembly preview as the LAST plate -- MakerWorld's mw_assembly_view()
 #      layout rendered from the dev bundle, centered on the bed, NEVER arranged
@@ -92,17 +94,27 @@ SET_ARGS=()
 for override in "${PRINT_SETTINGS_OVERRIDES[@]}"; do SET_ARGS+=(--set "$override"); done
 OBJECT_SET_ARGS=()
 
+# FILAMENT_MAP (export_3mf_config.sh) -> multicolor_3mf.py --map arguments.
+# Only parts marked multicolor=1 consult it; an empty map is normal for a
+# single-color project.
+FILAMENT_MAP_ARGS=()
+for mapping in "${FILAMENT_MAP[@]+"${FILAMENT_MAP[@]}"}"; do
+    FILAMENT_MAP_ARGS+=(--map "$mapping")
+done
+
 WORKDIR="$(mktemp -d)"
 trap 'rm -rf "$WORKDIR"' EXIT
 
 BED_EXCLUDE_ARGS=()
 [ -n "$BED_EXCLUDE_AREA" ] && BED_EXCLUDE_ARGS=(--bed-exclude-area="$BED_EXCLUDE_AREA")
 
-# One Bambu Studio CLI call turning a plate's STLs into a single-plate 3mf
-# (plate.3mf in that plate's dir) -- shared by the regular plates and the
-# assembly preview plate.
+# One Bambu Studio CLI call turning a plate's part files into a single-plate
+# 3mf (plate.3mf in that plate's dir) -- shared by the regular plates and the
+# assembly preview plate. Part files are .stl, or .3mf for a multicolor part
+# (Bambu Studio's CLI takes a mix of both in one call, and arranges a
+# multi-part object as one unit).
 #   $1 plate dir   $2 --enable-support value   $3 orient (true/false)
-#   $4 arrange (true/false)   $5.. STL file names, relative to $1
+#   $4 arrange (true/false)   $5.. part file names, relative to $1
 bambu_export_plate() {
     local dir="$1" enable_support="$2" orient="$3" arrange="$4"
     shift 4
@@ -139,7 +151,7 @@ for (( p=1; p<=PLATE_COUNT; p++ )); do
     echo "[Plate $p \"$plate_name\"] exporting ${#plate_parts[@]} part(s) ..."
 
     unset NAME_COUNT; declare -A NAME_COUNT=()
-    STL_FILES=()
+    PART_FILES=()
     plate_enable_support="$REFERENCE_ENABLE_SUPPORT"
     for entry in "${plate_parts[@]}"; do
         src="${entry%%|*}"
@@ -151,17 +163,64 @@ for (( p=1; p<=PLATE_COUNT; p++ )); do
         n=$(( ${NAME_COUNT[$base]:-0} + 1 )); NAME_COUNT[$base]=$n
         name="$base"; [ "$n" -gt 1 ] && name="${base}_${n}"
 
-        echo "  $src -> ${name}.stl"
-        if ! "$OPENSCAD" "${QUALITY_ARGS[@]}" "${PARAM_ARGS[@]}" \
-                -o "$plate_dir/${name}.stl" "$src" > /dev/null 2>&1; then
-            echo "  OpenSCAD failed to export $src" >&2; exit 1
+        # multicolor=1 changes how this part is exported, so it has to be
+        # known before the export -- the other suffixes are applied after.
+        part_multicolor=false
+        [[ ";$part_overrides;" == *";multicolor=1;"* ]] && part_multicolor=true
+
+        if [ "$part_multicolor" = "true" ]; then
+            # ONE OpenSCAD run: --enable=lazy-union keeps the part's
+            # top-level children (its color regions) as separate closed
+            # solids instead of unioning them, and material-type=color
+            # records which color each one was drawn in. multicolor_3mf.py
+            # turns that into a single Bambu object whose parts each carry
+            # an `extruder` -- real per-volume filament assignment, which
+            # colors baked into the mesh cannot give (see its header).
+            # PARAM_OVERRIDES reach this the same as any other part: the
+            # part file is still OpenSCAD's main file.
+            echo "  $src -> ${name}.3mf (multicolor)"
+            if ! "$OPENSCAD" "${QUALITY_ARGS[@]}" "${PARAM_ARGS[@]}" \
+                    --enable=lazy-union \
+                    -O export-3mf/color-mode=model \
+                    -O export-3mf/material-type=color \
+                    -o "$plate_dir/${name}_regions.3mf" "$src" > /dev/null 2>&1; then
+                echo "  OpenSCAD failed to export $src" >&2; exit 1
+            fi
+            if ! "$PYTHON" "$SCRIPTS_DIR/export/multicolor_3mf.py" \
+                    "$plate_dir/${name}_regions.3mf" "$plate_dir/${name}.3mf" \
+                    --reference "$REFERENCE_3MF" --name "${name}.3mf" \
+                    "${FILAMENT_MAP_ARGS[@]+"${FILAMENT_MAP_ARGS[@]}"}"; then
+                exit 1
+            fi
+            PART_FILES+=("${name}.3mf")
+            part_file="${name}.3mf"
+        else
+            echo "  $src -> ${name}.stl"
+            if ! "$OPENSCAD" "${QUALITY_ARGS[@]}" "${PARAM_ARGS[@]}" \
+                    -o "$plate_dir/${name}.stl" "$src" > /dev/null 2>&1; then
+                echo "  OpenSCAD failed to export $src" >&2; exit 1
+            fi
+            PART_FILES+=("${name}.stl")
+            part_file="${name}.stl"
         fi
-        STL_FILES+=("${name}.stl")
 
         [ -z "$part_overrides" ] && continue
         IFS=';' read -ra kv_pairs <<< "$part_overrides"
         for kv in "${kv_pairs[@]}"; do
-            if [ "$kv" = "auto_orient=1" ]; then
+            if [ "$kv" = "multicolor=1" ]; then
+                continue    # already handled, above
+            elif [ "$kv" = "auto_orient=1" ]; then
+                if [ "$part_multicolor" = "true" ]; then
+                    # Bambu's per-object orient goes through --export-stl,
+                    # which would flatten the object's parts back into one
+                    # mesh and lose every filament assignment. Plate-level
+                    # PLATE_<N>_AUTO_ORIENT does keep them (it orients the
+                    # object as a unit), so say which one to use.
+                    echo "  auto_orient=1 cannot be combined with multicolor=1 ($src):" >&2
+                    echo "  it would merge the color regions back into one mesh." >&2
+                    echo "  Use PLATE_${p}_AUTO_ORIENT=true instead." >&2
+                    exit 1
+                fi
                 # Bambu's "auto orient selected object", this part alone.
                 # --export-stl ignores the filename it is given and always
                 # writes stl/obj_1_<basename>.stl in the working directory.
@@ -175,14 +234,14 @@ for (( p=1; p<=PLATE_COUNT; p++ )); do
                     echo "  warning: auto-orient produced nothing; keeping authored orientation" >&2
                 fi
             else
-                OBJECT_SET_ARGS+=(--object-set "$p" "${name}.stl" "$kv")
+                OBJECT_SET_ARGS+=(--object-set "$p" "$part_file" "$kv")
                 [ "$kv" = "enable_support=1" ] && plate_enable_support="1"
             fi
         done
     done
 
     echo "  bambu-studio: arrange=$plate_arrange orient=$plate_auto_orient support=$plate_enable_support"
-    bambu_export_plate "$plate_dir" "$plate_enable_support" "$plate_auto_orient" "$plate_arrange" "${STL_FILES[@]}"
+    bambu_export_plate "$plate_dir" "$plate_enable_support" "$plate_auto_orient" "$plate_arrange" "${PART_FILES[@]}"
     ASSEMBLE_ARGS+=(--plate "$plate_name" "$plate_dir/plate.3mf")
 done
 

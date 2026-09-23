@@ -55,6 +55,16 @@ MW_PLATE_SIZE_CEILING="235"
 #       -> Bambu Studio's "auto orient selected object" for this part only.
 #          Parts are authored in print orientation already
 #          (docs/conventions/geometry.md), so this is rarely needed.
+#          Cannot be combined with multicolor=1 (it would merge the color
+#          regions); use PLATE_<N>_AUTO_ORIENT instead.
+#   "parts/lid.scad|multicolor=1"
+#       -> export this part as ONE object with one part per color region,
+#          each on its own filament, instead of one single-filament mesh.
+#          Requires: the part's BUILD:EXCLUDE block calls its regions as
+#          separate top-level children, and FILAMENT_MAP in
+#          export_3mf_config.sh maps their colors to slots.
+#          MakerWorld is unaffected -- PMM colors the model from the same
+#          color() calls either way. -> docs/workflows/multicolor.md
 #
 # Optional per-plate settings (add after that plate's PARTS array):
 #   PLATE_<N>_ARRANGE=false       keep as-exported positions (default true).

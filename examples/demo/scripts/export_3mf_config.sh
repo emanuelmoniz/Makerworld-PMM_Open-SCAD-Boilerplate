@@ -22,7 +22,14 @@
 # ---- 1. PARAMETER OVERRIDES -----------------------------------------------
 # Same convention as render_config.sh: OpenSCAD -D flags, applied to every
 # part. Omitted = params.scad default.
+#
+# label_style: the demo ships engraved (one color). Embossed puts the label
+# in its own filament, which is what makes the lid a MULTICOLOR part here --
+# these overrides reach a multicolor part exactly like any other, so with
+# label_style back at its default the export just reports one region and
+# prints the lid single-filament. -> docs/workflows/multicolor.md
 PARAM_OVERRIDES=(
+    "label_style=\"embossed\""
     # "inner_length=120"
 )
 
@@ -35,11 +42,26 @@ FACE_DETAIL_FS=0.4
 # A .3mf saved once from the Bambu Studio GUI. Its printer/filament/process
 # settings (Metadata/project_settings.config) are copied wholesale onto the
 # export -- Bambu's CLI cannot load a full preset by name.
-# The shipped file is: Bambu Lab A1 0.4 nozzle / 0.20mm Standard @BBL A1 /
-# Bambu PLA Matte @BBL A1. To use your own: in Bambu Studio pick your
-# printer + process + filament, add any small object, File > Save Project
-# As..., save it over this path (keep PRINTER in plates_config.sh matching).
-REFERENCE_3MF="../../scripts/export/base_settings.3mf"   # shared with the root project
+# This demo keeps its OWN reference rather than sharing the root project's,
+# because the lid is a multicolor part: the reference has to carry at least
+# as many filaments as FILAMENT_MAP uses, and the root one has a single
+# filament. It is: Bambu Lab A1 0.4 nozzle / 0.20mm Standard @BBL A1 / two
+# slots of Bambu PLA Basic @BBL A1, colored like the model. To use your own:
+# in Bambu Studio pick your printer + process + filaments, add any small
+# object, File > Save Project As..., save it over this path (keep PRINTER in
+# plates_config.sh matching).
+REFERENCE_3MF="scripts/base_settings.3mf"
+
+# ---- 3b. FILAMENT MAP (multicolor parts only) -----------------------------
+# Which slot each color in the model prints in, 1-based, in REFERENCE_3MF's
+# filament order. The two colors here are lib/params.scad's lid_color
+# ("LightSlateGray", which OpenSCAD exports as #778899) and the user-facing
+# label_color. Change label_color in the customizer and this map needs the
+# new hex -- the export prints the colors it found when one is missing.
+FILAMENT_MAP=(
+    "#778899=1"     # lid_color / box_color-ish body
+    "#E67E22=2"     # label_color: the embossed label
+)
 
 # ---- 4. GLOBAL PRINT-SETTING OVERRIDES ------------------------------------
 # "key=value" entries applied on top of REFERENCE_3MF for every plate. Keys

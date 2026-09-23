@@ -78,7 +78,7 @@ file, so the build flattens everything into one bundle.
 | Build the local dev bundle | `scripts\dev_build.bat` | [pipelines](docs/toolchain/pipelines.md) |
 | Lint + smoke check | `scripts\check.bat` | [pipelines](docs/toolchain/pipelines.md) |
 | Render preview images | `scripts\render.bat` | [pipelines](docs/toolchain/pipelines.md) |
-| Export a Bambu `.3mf` | `scripts\export_3mf.bat` | [pipelines](docs/toolchain/pipelines.md) |
+| Export a Bambu `.3mf` | `scripts\export_3mf.bat` | [pipelines](docs/toolchain/pipelines.md), [multicolor](docs/workflows/multicolor.md) |
 
 Prerequisites (OpenSCAD, Python 3, Git Bash, and optionally Bambu Studio, BOSL2 and fonts) are
 listed in [docs/toolchain/setup.md](docs/toolchain/setup.md). To preview a single part, open

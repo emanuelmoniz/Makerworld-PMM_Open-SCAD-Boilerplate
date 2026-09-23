@@ -24,6 +24,8 @@ def part_entry(part):
     kv_pairs = []
     if part.get("auto_orient"):
         kv_pairs.append("auto_orient=1")
+    if part.get("multicolor"):
+        kv_pairs.append("multicolor=1")
     for key, value in part.get("overrides", {}).items():
         kv_pairs.append(f"{key}={value}")
     if kv_pairs:

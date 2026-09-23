@@ -12,7 +12,9 @@
 # single-plate export, it
 #   1. renumbers every object/part id (each single-plate export restarts
 #      counting from 1, so merging as-is would collide) and copies its mesh
-#      data across,
+#      data across -- one mesh per component, so a multicolor part
+#      (multicolor_3mf.py: one object, one part per color region, each with
+#      its own filament) survives the merge with its parts intact,
 #   2. writes one Metadata/model_settings.config with one <plate> block per
 #      plate, and grafts a REFERENCE .3mf's Metadata/project_settings.config
 #      (printer/filament/process settings) onto the result wholesale.
@@ -168,12 +170,19 @@ def apply_project_settings_overrides(raw_json_bytes, overrides):
 
 class SinglePlate:
     """Parses one Bambu Studio single-plate .3mf export into a plain
-    in-memory representation: one entry per printed part, each with its
-    component transform (mesh -> object-local) and build-item transform
-    (object-local -> world) kept exactly as Bambu Studio itself wrote them --
-    nothing here ever touches either transform -- plus the matching
-    Metadata/model_settings.config <object>/<part> block (kept verbatim
-    except for the id, which the caller renumbers)."""
+    in-memory representation: one entry per printed OBJECT, each with its
+    build-item transform (object-local -> world) and one component per mesh
+    the object is built from -- with that component's own transform (mesh ->
+    object-local) -- all kept exactly as Bambu Studio itself wrote them
+    (nothing here ever touches either transform) -- plus the matching
+    Metadata/model_settings.config <object> block (kept verbatim except for
+    the ids, which the caller renumbers).
+
+    An object usually has ONE component, but a multicolor part (see
+    multicolor_3mf.py) is one object with one component per color region,
+    each carrying its own `extruder` in the settings block. Bambu Studio's
+    CLI keeps that grouping through arrange and orient, so by here it is
+    just an object that happens to have several components."""
 
     def __init__(self, path):
         with zipfile.ZipFile(path) as zf:
@@ -203,37 +212,42 @@ class SinglePlate:
             for obj in settings_root.findall("object"):
                 settings_objects_by_id[obj.get("id")] = obj
 
-            self.parts = []
+            self.objects = []
             for item in model_root.findall(f"{q(CORE_NS, 'build')}/{q(CORE_NS, 'item')}"):
                 wrapper_id = item.get("objectid")
                 item_transform = item.get("transform", "1 0 0 0 1 0 0 0 1 0 0 0")
 
                 wrapper_obj = objects_by_id[wrapper_id]
-                component = wrapper_obj.find(f"{q(CORE_NS, 'components')}/{q(CORE_NS, 'component')}")
-                comp_transform = component.get("transform", "1 0 0 0 1 0 0 0 1 0 0 0")
-                comp_path = component.get(q(PROD_NS, "path"))
-                comp_objectid = component.get("objectid")
+                components = []
+                for component in wrapper_obj.findall(
+                        f"{q(CORE_NS, 'components')}/{q(CORE_NS, 'component')}"):
+                    components.append({
+                        "mesh_xml": get_mesh_file(component.get(q(PROD_NS, "path"))),
+                        "mesh_objectid": component.get("objectid"),
+                        "comp_transform": component.get(
+                            "transform", "1 0 0 0 1 0 0 0 1 0 0 0"),
+                    })
 
-                self.parts.append({
-                    "mesh_xml": get_mesh_file(comp_path),
-                    "mesh_objectid": comp_objectid,
-                    "comp_transform": comp_transform,
+                self.objects.append({
+                    "components": components,
                     "item_transform": item_transform,
                     "settings_object": settings_objects_by_id[wrapper_id],
                 })
 
     def shift_xy(self, dx, dy):
-        """Adds a constant (dx, dy) to every part's build-item translation --
-        a pure additive offset, not a recomputed position: whatever X/Y
+        """Adds a constant (dx, dy) to every object's build-item translation
+        -- a pure additive offset, not a recomputed position: whatever X/Y
         Bambu Studio's own --arrange/--orient (or plain STL import) already
-        decided is preserved exactly, just slid over as a rigid group. Used
-        to separate plates in the shared world-coordinate space -- see
-        grid_cell()'s comment for why that's needed at all."""
-        for part in self.parts:
-            t = parse_transform(part["item_transform"])
+        decided is preserved exactly, just slid over as a rigid group (which
+        for a multicolor object moves all of its parts together, since they
+        share the one item transform). Used to separate plates in the shared
+        world-coordinate space -- see grid_cell()'s comment for why that's
+        needed at all."""
+        for obj in self.objects:
+            t = parse_transform(obj["item_transform"])
             t[9] += dx
             t[10] += dy
-            part["item_transform"] = format_transform(t)
+            obj["item_transform"] = format_transform(t)
 
 
 GAP_MM = 50.0
@@ -298,51 +312,65 @@ def build_merged_3mf(output_path, plates_with_names, reference_path, application
     mesh_files = {}  # filename -> xml bytes (with renumbered object id)
     rels_entries = []
 
-    part_counter = 0
+    next_id = 0          # 3MF resource ids, unique across the whole project
+    mesh_counter = 0     # one /3D/Objects/object_N.model per component
     plate_blocks = []
 
     for plate_index, (plate_name, plate) in enumerate(plates_with_names):
         model_instances = []
-        for part in plate.parts:
-            part_counter += 1
-            mesh_id = str(part_counter * 2 - 1)
-            wrapper_id = str(part_counter * 2)
-            mesh_filename = f"object_{part_counter}.model"
-
-            # Rewrite the mesh file's own <object id="..."> to the new mesh_id.
-            mesh_root = ET.fromstring(part["mesh_xml"])
-            for obj in mesh_root.findall(f"{q(CORE_NS, 'resources')}/{q(CORE_NS, 'object')}"):
-                if obj.get("id") == part["mesh_objectid"]:
-                    obj.set("id", mesh_id)
-                    obj.set(q(PROD_NS, "UUID"), new_uuid())
-            mesh_files[mesh_filename] = serialize_xml(mesh_root)
-            rels_entries.append((f"/3D/Objects/{mesh_filename}", f"rel-{part_counter}"))
-
+        for printed_object in plate.objects:
             wrapper_obj = ET.SubElement(resources, q(CORE_NS, "object"), {
-                "id": wrapper_id,
+                "id": "",    # filled in below: the wrapper is numbered last
                 q(PROD_NS, "UUID"): new_uuid(),
                 "type": "model",
             })
             components = ET.SubElement(wrapper_obj, q(CORE_NS, "components"))
-            ET.SubElement(components, q(CORE_NS, "component"), {
-                q(PROD_NS, "path"): f"/3D/Objects/{mesh_filename}",
-                "objectid": mesh_id,
-                q(PROD_NS, "UUID"): new_uuid(),
-                "transform": part["comp_transform"],
-            })
+
+            # One mesh file per component. A single-color part has exactly
+            # one; a multicolor part has one per color region, and its
+            # <part> blocks are matched to them BY POSITION -- which is how
+            # Bambu Studio itself writes them (part id == component
+            # objectid, in file order).
+            settings_obj = printed_object["settings_object"]
+            part_elems = settings_obj.findall("part")
+            for position, component in enumerate(printed_object["components"]):
+                next_id += 1
+                mesh_counter += 1
+                mesh_id = str(next_id)
+                mesh_filename = f"object_{mesh_counter}.model"
+
+                # Rewrite the mesh file's own <object id="..."> to mesh_id.
+                mesh_root = ET.fromstring(component["mesh_xml"])
+                for obj in mesh_root.findall(
+                        f"{q(CORE_NS, 'resources')}/{q(CORE_NS, 'object')}"):
+                    if obj.get("id") == component["mesh_objectid"]:
+                        obj.set("id", mesh_id)
+                        obj.set(q(PROD_NS, "UUID"), new_uuid())
+                mesh_files[mesh_filename] = serialize_xml(mesh_root)
+                rels_entries.append((f"/3D/Objects/{mesh_filename}", f"rel-{mesh_counter}"))
+
+                ET.SubElement(components, q(CORE_NS, "component"), {
+                    q(PROD_NS, "path"): f"/3D/Objects/{mesh_filename}",
+                    "objectid": mesh_id,
+                    q(PROD_NS, "UUID"): new_uuid(),
+                    "transform": component["comp_transform"],
+                })
+
+                if position < len(part_elems):
+                    part_elems[position].set("id", mesh_id)
+
+            next_id += 1
+            wrapper_id = str(next_id)
+            wrapper_obj.set("id", wrapper_id)
 
             ET.SubElement(build, q(CORE_NS, "item"), {
                 "objectid": wrapper_id,
                 q(PROD_NS, "UUID"): new_uuid(),
-                "transform": part["item_transform"],
+                "transform": printed_object["item_transform"],
                 "printable": "1",
             })
 
-            settings_obj = part["settings_object"]
             settings_obj.set("id", wrapper_id)
-            part_elem = settings_obj.find("part")
-            if part_elem is not None:
-                part_elem.set("id", mesh_id)
 
             # Per-object print-setting overrides (e.g. enable_support for
             # just this part) are plain sibling <metadata key=.. value=../>
