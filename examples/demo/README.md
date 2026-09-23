@@ -25,6 +25,7 @@ supports needed.
 | Deliberate `+ 1` overshoot on cuts (no coincident faces) | [parts/box_body.scad](parts/box_body.scad) |
 | A part that colors itself (outermost `color()` wins) | [parts/sliding_lid.scad](parts/sliding_lid.scad) |
 | A multicolor part: one module per color, one filament each | [parts/sliding_lid.scad](parts/sliding_lid.scad) + `multicolor=1` / `FILAMENT_MAP` in [scripts/](scripts/), [multicolor](../../docs/workflows/multicolor.md) |
+| The assembly preview plate in the same colors: every solid in an `assembly_region()`, the lid as its region modules | [assembly/assembly_main.scad](assembly/assembly_main.scad) + `FILAMENT_MAP`, [multicolor](../../docs/workflows/multicolor.md#the-assembly-preview-plate) |
 | Multi-plate output + assembly view | [assembly/assembly_main.scad](assembly/assembly_main.scad) |
 | Two assembled views (`main`, `open`) stacked on the preview plate by footprint | `ASSEMBLY_PLATE_VIEWS` in [scripts/plates_config.sh](scripts/plates_config.sh) |
 | Plates validated against `mw_plate_N()` at build time | [scripts/plates_config.sh](scripts/plates_config.sh) |

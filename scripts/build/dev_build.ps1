@@ -11,6 +11,9 @@
 #   - "MakerWorld assembly plate" (mw_assembly_view) always selectable when
 #     ASSEMBLY_PLATE_VIEWS is set, plus a dev_view_offset XY shift -- the 3mf
 #     export renders its assembly preview plate from this bundle with both
+#   - a dev_assembly_regions list, looped as $assembly_region at the TOP
+#     level, so the 3mf export can render the preview plate one color region
+#     per solid (docs/workflows/multicolor.md, "The assembly preview plate")
 #
 # Gitignored (dist/*_dev.scad) -- a throwaway convenience, regenerate any
 # time. Runs the same plate validation as build.ps1, so it fails the same
@@ -68,6 +71,10 @@ $b.Add("// XY shift applied to the rendered view. The 3mf export sets it (-D) to
 $b.Add("// bed center for its assembly preview plate; leave at [0, 0] otherwise.")
 $b.Add("dev_view_offset = [0, 0];")
 $b.Add("")
+$b.Add("// assembly_region() names to render one per top-level solid. The 3mf export")
+$b.Add("// sets it (-D) for a multicolor preview plate; leave at [] otherwise.")
+$b.Add("dev_assembly_regions = [];")
+$b.Add("")
 $b.Add("// Preview curve smoothness in degrees (lower = finer, slower)")
 $b.Add("dev_render_fa = 12; // [1:1:60]")
 $b.Add("")
@@ -91,6 +98,10 @@ $b.Add("// ---- dev preview -------------------------------------------------")
 $b.Add('$fa = dev_render_fa;')
 $b.Add('$fs = dev_render_fs;')
 $b.Add("")
+$b.Add("// A TOP-LEVEL for: with --enable=lazy-union each iteration stays its own")
+$b.Add("// solid (lazy-union does not reach inside a module call). [undef] = one")
+$b.Add("// pass with no region filter, i.e. everything.")
+$b.Add("for (`$assembly_region = len(dev_assembly_regions) > 0 ? dev_assembly_regions : [undef])")
 $b.Add("translate([dev_view_offset[0], dev_view_offset[1], 0]) {")
 for ($i = 0; $i -lt $views.Count; $i++) {
     $keyword = "    } else if"

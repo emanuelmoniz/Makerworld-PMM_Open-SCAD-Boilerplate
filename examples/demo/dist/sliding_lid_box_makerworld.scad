@@ -147,9 +147,14 @@ module sliding_lid() {
 // ---- from assembly/assembly_main.scad ----
 function open_lid_pull() = lid_length * 0.45;
 module assembly_main(lid_pull = 0) {
-    color("#1a2f4a") box_body();
-    translate([lid_x + lid_pull, lid_y, lid_z])
-        sliding_lid();
+    assembly_region("box")
+        color("#1a2f4a") box_body();
+    translate([lid_x + lid_pull, lid_y, lid_z]) {
+        assembly_region("lid")
+            sliding_lid_body();
+        assembly_region("label")
+            sliding_lid_label();
+    }
 }
 function assembly_main_footprint() = [0, 0, outer_length, outer_width];
 module assembly_open() {
@@ -164,6 +169,14 @@ module mw_plate_1() {
 module mw_plate_2() {
     translate([-lid_length / 2, -lid_width / 2, 0])
         sliding_lid();
+}
+module assembly_region(name) {
+    if (is_undef($assembly_region))
+        children();
+    else if ($assembly_region == "?")
+        echo(str("ASSEMBLY_REGION:", name));
+    else if ($assembly_region == name)
+        children();
 }
 module assembly_view(name) {
     if (name == "main") {

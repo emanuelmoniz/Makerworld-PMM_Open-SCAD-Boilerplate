@@ -13,6 +13,9 @@ All notable changes to the Sliding-Lid Box demo. Format based on
   [docs/workflows/multicolor.md](../../docs/workflows/multicolor.md)).
 - `scripts/base_settings.3mf`: the demo's own reference project, with two filaments — the root
   project's has one, which is not enough for the label's slot.
+- The 3MF export's assembly preview plate is multicolor too. `assembly_main()` wraps the box, lid
+  body and label each in `assembly_region()`, so the label shows on filament 2 like on the Lid
+  plate. `FILAMENT_MAP` gains `box_color` (#4682B4) on filament 1.
 
 ### Changed
 - `sliding_lid()` now unions two region modules instead of drawing the lid inline. Same geometry,
@@ -21,6 +24,8 @@ All notable changes to the Sliding-Lid Box demo. Format based on
   take the lid color too (they previously exported uncolored).
 - The 3MF export runs with `label_style="embossed"`, the configuration the multicolor path
   demonstrates.
+- The assembled views draw the lid as `sliding_lid_body()` + `sliding_lid_label()` instead of
+  `sliding_lid()`. The geometry and the MakerWorld assembly view are the same.
 
 ## [1.0.0] - 2026-09-22
 

@@ -91,7 +91,10 @@ plate from it.
   against `mw_plate_size`, and `mw_assembly_view()` must compile and be non-empty when views are
   configured (no size limit: it's a preview). Unresolved includes or modules count as failures.
 
-Run after every build, before releases, and in CI.
+Run after every build, before releases, and in CI. `.github/workflows/check.yml` runs the builds,
+a stale-bundle check and these checks for the root project and `examples/demo` on every push,
+pull request and published release, using **OpenSCAD Nightly** (`openscad-nightly` from the
+official OBS apt repo), the same kind of build PMM uses.
 
 ## Render (manual only)
 
@@ -117,6 +120,10 @@ ratios. **Agents never render unless asked** (AGENTS.md).
    `mw_plate_1()`..`mw_plate_N()`. It's rendered as one object from the freshly rebuilt dev bundle
    (`-D dev_view="mw_assembly_view"`, `-D dev_view_offset=[bed center]`), keeps MakerWorld's
    exact layout, and is **never** passed through Bambu's arrange. It may be larger than the bed.
+   If its views mark two or more color regions with `assembly_region()`, it's rendered one solid
+   per region (`dev_assembly_regions`, `--enable=lazy-union`) and goes through
+   `multicolor_3mf.py` and `FILAMENT_MAP` like a multicolor part. Otherwise it's one STL
+   ([multicolor](../workflows/multicolor.md#the-assembly-preview-plate)).
 4. `assemble_3mf.py` merges the single-plate exports into one multi-plate project. It renumbers
    ids, shifts each plate by a rigid world-space offset (without it, Bambu piles everything onto
    plate 1), grafts `REFERENCE_3MF`'s print settings, and applies global (`--set`) and per-part

@@ -16,8 +16,12 @@ and print yourself.
 3. Mark the part `multicolor=1` in `scripts/plates_config.sh`.
 4. Map each color to a filament slot in `FILAMENT_MAP` (`scripts/export_3mf_config.sh`).
 5. Point `REFERENCE_3MF` at a project saved with at least that many filaments.
+6. In the assembled views, call the same region modules, each wrapped in `assembly_region("<name>")`,
+   so the **assembly preview plate** shows the colors too
+   ([below](#the-assembly-preview-plate)).
 
-`examples/demo` does all five: `parts/sliding_lid.scad` is a lid body plus an embossed label.
+`examples/demo` does all six: `parts/sliding_lid.scad` is a lid body plus an embossed label, and
+`assembly/assembly_main.scad` draws the box, lid and label as three regions.
 
 ## 1. One module per color
 
@@ -44,8 +48,10 @@ module sliding_lid() {
 }
 ```
 
-`sliding_lid()` still exists and still unions the regions: it is what `mw_plate_N()` and every
-assembled view call, so the bundle and MakerWorld are unchanged.
+`sliding_lid()` still exists and still unions the regions: it is what `mw_plate_N()` calls (the
+plate validator counts `sliding_lid(` calls), so the bundle and MakerWorld are unchanged. The
+assembled views call the region modules directly instead. See
+[the assembly preview plate](#the-assembly-preview-plate).
 
 **The `color()` must wrap the whole region, not a child inside it.** A `color()` sitting inside a
 `difference()` or `intersection()` does not cover the faces that the cut creates — those export
@@ -139,6 +145,65 @@ project with its parts intact.
 
 If a parameter collapses the part to one region — the demo with `label_style=none` — that is not
 an error: the export warns and writes an ordinary single-filament object.
+
+## The assembly preview plate
+
+The export's last plate (`ASSEMBLY_PLATE_NAME`, the `mw_assembly_view()` layout) is one object, and
+it would come out on a **single filament** even when a part on the print plates is multicolor. The
+top-level-children trick from step 2 can't reach it: the preview is rendered through
+`mw_assembly_view()` → `assembly_view()` → `assembly_<name>()`, and lazy-union stops at the first
+module call.
+
+So the assembled views **mark their color regions the same way the printable parts do**. Every
+solid in every view sits inside exactly one `assembly_region("<name>")` (defined in
+`assembly/assembly_main.scad`). A multicolor part appears as its **region modules**, not its
+main module, in the same order as its `BUILD:EXCLUDE` block:
+
+```openscad
+module assembly_main(lid_pull = 0) {
+    assembly_region("box")
+        color(box_color) box_body();
+    translate([lid_x + lid_pull, lid_y, lid_z]) {
+        assembly_region("lid")
+            sliding_lid_body();         // not sliding_lid(): that would be ONE region
+        assembly_region("label")
+            sliding_lid_label();        // last, as in parts/sliding_lid.scad
+    }
+}
+```
+
+What the export does with it:
+
+1. A geometry-free run with `$assembly_region = "?"` makes each `assembly_region()` echo its
+   name. The export keeps them in first-seen order (`box lid label`).
+2. With **two or more** names, the dev bundle renders again with `--enable=lazy-union`, looping
+   `$assembly_region` over the names at the **top level**. Each pass draws only that region's
+   children, so each region becomes its own solid.
+3. `multicolor_3mf.py` turns them into one Bambu object, exactly as for a `multicolor=1` part.
+   Every color is looked up in `FILAMENT_MAP`. That includes colors that appear only in the
+   assembly, like the demo's `box_color`, and an unmapped one aborts the export as usual.
+
+With fewer than two names, which includes any view that never calls `assembly_region()`, the
+preview is the single STL it always was. Outside the export `$assembly_region` is unset, and
+`assembly_region()` just draws its children, so MakerWorld and your local previews look the same
+as before.
+
+Rules, all learned from the failure they prevent:
+
+- **Wrap everything, or nothing.** A solid outside every `assembly_region()` is drawn in *every*
+  pass and lands in every region. If its color differs, the export stops with "region N is drawn
+  in more than one color". If not, it's silently duplicated.
+- **Region, then color, each on its own line.** The MakerWorld build flattens `color(<var>)` only
+  where it **starts** a line (`FLATTEN_COLORS`). `assembly_region("box") color(box_color) ...` on
+  one line would ship `box_color` unflattened. Write it as two lines, like the example.
+- **One name can repeat.** The lid in `main` and the lid in `open` both use `"lid"`, so they become one
+  region (one Bambu part with two shells) on one filament. Two different names with the same color
+  also work. They just share a slot.
+- **Order is overlap ownership**, as in [the rule below](#where-regions-overlap-the-last-one-wins):
+  the name echoed later owns shared volume. Call the label after the lid in the **first** view
+  that uses them, because that's where their order is decided.
+- The preview plate isn't printed, so a slot shared only to keep `REFERENCE_3MF` small is fine.
+  The demo puts `box_color` on filament 1 with the lid.
 
 ## Why not the obvious alternatives
 

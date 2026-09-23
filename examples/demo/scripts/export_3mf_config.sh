@@ -58,9 +58,16 @@ REFERENCE_3MF="scripts/base_settings.3mf"
 # ("LightSlateGray", which OpenSCAD exports as #778899) and the user-facing
 # label_color. Change label_color in the customizer and this map needs the
 # new hex -- the export prints the colors it found when one is missing.
+#
+# The assembly preview plate goes through this map too: its views mark
+# their color regions with assembly_region() (assembly/assembly_main.scad),
+# so it shows the box as well -- box_color ("SteelBlue", #4682B4). It shares
+# slot 1 with the lid: the preview is a visual reference, not a print, and
+# the reference project has only two filaments.
 FILAMENT_MAP=(
-    "#778899=1"     # lid_color / box_color-ish body
+    "#778899=1"     # lid_color: the lid body
     "#E67E22=2"     # label_color: the embossed label
+    "#4682B4=1"     # box_color: the box, on the assembly preview plate only
 )
 
 # ---- 4. GLOBAL PRINT-SETTING OVERRIDES ------------------------------------

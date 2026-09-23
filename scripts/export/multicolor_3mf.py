@@ -3,8 +3,10 @@
 # <PROJECT NAME>  |  Multicolor part -> Bambu multi-part object
 # ------------------------------------------------------------
 # Used by scripts/export/export_3mf.sh for parts flagged `multicolor=1` in
-# scripts/plates_config.sh. Turns ONE OpenSCAD export into ONE Bambu object
-# made of several parts, each assigned its own filament slot.
+# scripts/plates_config.sh, and for the assembly preview plate when its views
+# mark their color regions with assembly_region(). Turns ONE OpenSCAD export
+# into ONE Bambu object made of several parts, each assigned its own filament
+# slot.
 #
 # INPUT: what OpenSCAD writes for a part whose BUILD:EXCLUDE block calls its
 # color regions as separate top-level children, exported with
@@ -183,7 +185,11 @@ def read_regions(path):
                 "the faces\n"
                 "       the cut creates are not covered by it and export uncolored. Wrap "
                 "the whole\n"
-                "       region in one color() instead (docs/workflows/multicolor.md).")
+                "       region in one color() instead. On the assembly preview plate it "
+                "can also be\n"
+                "       a solid outside every assembly_region(), which lands in every "
+                "region\n"
+                "       (docs/workflows/multicolor.md).")
         regions.append(Region(index, colors[0] if colors else None, mesh))
     return regions
 

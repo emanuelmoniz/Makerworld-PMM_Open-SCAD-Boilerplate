@@ -105,6 +105,10 @@ PLATE_1_AUTO_ORIENT=false
 #   run through Bambu Studio's arrange -- it keeps exactly the layout
 #   MakerWorld shows. A visual reference, not meant to be printed; it may be
 #   larger than the bed.
+#   MULTICOLOR: it is one filament unless the views mark their color regions
+#   with assembly_region() (PLATE_ASSEMBLY_FILE) -- mirror a multicolor
+#   part's region modules there, and it gets one filament per color through
+#   FILAMENT_MAP, like the print plates. -> docs/workflows/multicolor.md
 ASSEMBLY_PLATE_NAME="_preview assembly DO NOT PRINT"
 ASSEMBLY_PLATE_VIEWS=(
     "main"

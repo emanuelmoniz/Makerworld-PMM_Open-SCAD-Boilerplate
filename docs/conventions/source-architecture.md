@@ -85,3 +85,7 @@ to back with `assembly_view_gap` of clear space between boxes (`assembly_stack_o
 centers the combined box. All views share one X translate, so parts authored at the same origin
 line up across views. OpenSCAD can't call a module by name, so `assembly_view()` and
 `assembly_view_footprint()` dispatch explicitly. See `assembly/assembly_main.scad`.
+
+When a part is multicolor, the views also wrap each solid in `assembly_region("<name>")`, so the
+3MF export's preview plate shows the same colors as the print plates
+([multicolor](../workflows/multicolor.md#the-assembly-preview-plate)).

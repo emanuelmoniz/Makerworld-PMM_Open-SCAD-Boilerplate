@@ -7,7 +7,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), [SemVer](https
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-09-22
+## [1.0.0] - 2026-09-23
 
 ### Added
 - Initial boilerplate, extracted and generalized from a released multi-part PMM project
@@ -40,4 +40,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), [SemVer](https
 - Reference docs: PMM specification, compatibility rules, sources; OpenSCAD customizer syntax,
   libraries and fonts; conventions; toolchain; workflows.
 - `examples/demo`: a runnable sliding-lid box exercising every convention.
-- `init_project.py` token filler, CI workflow, `.gitattributes` / `.editorconfig`.
+- `init_project.py` token filler, `.gitattributes` / `.editorconfig`.
+- Multicolor parts in the Bambu 3MF export: a part marked `multicolor=1` exports as one object
+  with one part per color region, each on its own filament (`FILAMENT_MAP`,
+  `multicolor_3mf.py`). `assembly_region(name)` makes the assembly preview plate multicolor too.
+  The demo's lid (body + embossed label) and assembled views use both.
+- CI workflow (`.github/workflows/check.yml`): builds, stale-bundle check, lint and smoke for the
+  root project and `examples/demo` on every push, pull request and published release, using
+  **OpenSCAD Nightly** (`openscad-nightly` from the official OBS apt repo).
+
+[Unreleased]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/releases/tag/v1.0.0

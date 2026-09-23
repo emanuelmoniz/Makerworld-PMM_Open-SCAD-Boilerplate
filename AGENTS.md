@@ -131,7 +131,10 @@ The full rationale is in the linked docs. These are the ones that fail silently.
   goes in neutral helper modules.
 - **A multicolor part is one module per color, called as separate top-level children** in its
   `BUILD:EXCLUDE` block, plus `multicolor=1` in `plates_config.sh` and a `FILAMENT_MAP` entry per
-  color. Each region's `color()` must wrap the whole region: a `color()` inside a `difference()`
+  color. **The assembled views must mirror it** so the preview plate is multicolor too. Wrap every
+  solid of every view in `assembly_region("<name>")`, on its own line above the `color()`, and
+  call the part's region modules, not its main module. Any other color in the views also needs a
+  `FILAMENT_MAP` entry. Each region's `color()` must wrap the whole region: a `color()` inside a `difference()`
   leaves the cut faces uncolored and the export rejects the part. MakerWorld is unaffected either
   way. → [multicolor](docs/workflows/multicolor.md)
 - **An assembled view "<name>" is three things:** `module assembly_<name>()`, a matching

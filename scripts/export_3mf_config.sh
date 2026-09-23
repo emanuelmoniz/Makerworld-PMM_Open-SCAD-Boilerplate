@@ -49,8 +49,10 @@ REFERENCE_3MF="scripts/export/base_settings.3mf"
 # 1-based, matching REFERENCE_3MF's filament order (its filament_colour --
 # `python scripts/export/list_settings.py --grep filament_colour`).
 #
-# Only parts marked `multicolor=1` in plates_config.sh consult this; leave it
-# empty for a single-color project. The hex is the color OpenSCAD actually
+# Only parts marked `multicolor=1` in plates_config.sh consult this, plus the
+# assembly preview plate when its views use assembly_region() -- then every
+# color in those views needs an entry too. Leave it empty for a single-color
+# project. The hex is the color OpenSCAD actually
 # exported, so named colors (color("SteelBlue")) work too -- run the export
 # once and it lists the colors it found, ready to paste in here. A color the
 # export finds and this map doesn't have aborts the export rather than

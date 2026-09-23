@@ -40,6 +40,9 @@ use <../parts/part_template.scad>
 
 // ---- 1. Assembled views ----------------------------------------------------
 // REPLACE ME: compose your parts in their assembled pose.
+// A multicolor part should show its colors on the 3mf export's preview plate
+// too: call its region modules here, each in its own assembly_region(), the
+// same way its BUILD:EXCLUDE block calls them (examples/demo does this).
 module assembly_main() {
     color(part_color) part_template();
 }
@@ -68,6 +71,24 @@ module mw_plate_1() {
 // assembly_<name>_footprint(), add one branch to EACH dispatcher below, and
 // list it in ASSEMBLY_PLATE_VIEWS. (OpenSCAD cannot call a module by name,
 // hence the explicit dispatchers.)
+
+// Marks one COLOR REGION of an assembled view, for the 3mf export's preview
+// plate -- the assembly-side twin of a multicolor part's top-level region
+// calls (docs/workflows/multicolor.md, "The assembly preview plate").
+// Wrap every solid of every view in exactly one, OUTSIDE its color():
+//     assembly_region("lid")   sliding_lid_body();
+// With $assembly_region unset (MakerWorld, previews) it draws its children
+// unchanged. The export first sets it to "?" to list the region names, then
+// renders one solid per name. A view that uses none is exported as one
+// single-color object, as before.
+module assembly_region(name) {
+    if (is_undef($assembly_region))
+        children();
+    else if ($assembly_region == "?")
+        echo(str("ASSEMBLY_REGION:", name));
+    else if ($assembly_region == name)
+        children();
+}
 
 // Dispatches a view name to its module.
 module assembly_view(name) {

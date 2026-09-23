@@ -18,6 +18,8 @@
 #   4. if ASSEMBLY_PLATE_VIEWS is set (plates_config.sh section 3): add the
 #      assembly preview as the LAST plate -- MakerWorld's mw_assembly_view()
 #      layout rendered from the dev bundle, centered on the bed, NEVER arranged
+#      -- multicolor too, when its views mark their color regions with
+#      assembly_region()
 #   5. merge every single-plate export into one project and graft the
 #      REFERENCE_3MF print settings + overrides (assemble_3mf.py)
 #
@@ -251,9 +253,16 @@ done
 #   - Rendered from the freshly rebuilt DEV bundle (one flat file), so
 #     PARAM_OVERRIDES reach every part however the sources include/use each
 #     other, and its injected mw_assembly_views matches this run's config.
-#   - One STL, one object, NEVER Bambu-arranged: it keeps mw_assembly_view()'s
-#     own layout (what MakerWorld shows), moved from the origin to the bed
-#     center with dev_view_offset. Plain STL import keeps coordinates as-is.
+#   - One object, NEVER Bambu-arranged: it keeps mw_assembly_view()'s own
+#     layout (what MakerWorld shows), moved from the origin to the bed center
+#     with dev_view_offset.
+#   - Multicolor when the views wrap their solids in assembly_region()
+#     (PLATE_ASSEMBLY_FILE): a geometry-free run with $assembly_region="?"
+#     lists the region names; with two or more, the dev bundle's top-level
+#     loop renders one solid per region under --enable=lazy-union, and
+#     multicolor_3mf.py maps their colors through FILAMENT_MAP exactly as
+#     for a multicolor=1 part. Otherwise: one STL on one filament.
+#     (docs/workflows/multicolor.md, "The assembly preview plate")
 if [ "${#ASSEMBLY_PLATE_VIEWS[@]}" -gt 0 ]; then
     echo "[Plate \"$ASSEMBLY_PLATE_NAME\"] rendering assembly preview (${ASSEMBLY_PLATE_VIEWS[*]}) ..."
     require_tool POWERSHELL "PowerShell (pwsh or powershell.exe)" "POWERSHELL_BIN"
@@ -265,14 +274,52 @@ if [ "${#ASSEMBLY_PLATE_VIEWS[@]}" -gt 0 ]; then
     bed_cy="$(awk "BEGIN { print ${BED_MIN_Y:-0} + $BED_DEPTH / 2 }")"
     assembly_dir="$WORKDIR/plate_assembly"
     mkdir -p "$assembly_dir"
-    if ! "$OPENSCAD" "${QUALITY_ARGS[@]}" "${PARAM_ARGS[@]}" \
-            -D 'dev_view="mw_assembly_view"' \
-            -D "dev_view_offset=[$bed_cx,$bed_cy]" \
-            -o "$assembly_dir/assembly_preview.stl" "$dev_bundle" > /dev/null 2>&1; then
-        echo "  OpenSCAD failed to render the assembly preview from $dev_bundle" >&2; exit 1
+    VIEW_ARGS=(-D 'dev_view="mw_assembly_view"' -D "dev_view_offset=[$bed_cx,$bed_cy]")
+
+    # Region discovery: an .echo export evaluates the views without building
+    # any geometry. Names are kept in first-seen order -- the order the
+    # solids are written in, so a later region owns what it shares with an
+    # earlier one, the same rule as a multicolor part's top-level calls.
+    if ! "$OPENSCAD" "${PARAM_ARGS[@]}" "${VIEW_ARGS[@]}" \
+            -D 'dev_assembly_regions=["?"]' \
+            -o "$assembly_dir/regions.echo" "$dev_bundle" > /dev/null 2>&1; then
+        echo "  OpenSCAD failed to evaluate the assembly preview from $dev_bundle" >&2; exit 1
+    fi
+    ASSEMBLY_REGIONS=()
+    while IFS= read -r region; do
+        [ -n "$region" ] && ASSEMBLY_REGIONS+=("$region")
+    done < <(tr -d '\r' < "$assembly_dir/regions.echo" \
+             | sed -n 's/^ECHO: "ASSEMBLY_REGION:\(.*\)"$/\1/p' | awk '!seen[$0]++')
+
+    if [ "${#ASSEMBLY_REGIONS[@]}" -ge 2 ]; then
+        # Same path as a multicolor=1 part: one solid per region, colors
+        # mapped to filaments through FILAMENT_MAP.
+        echo "  multicolor: regions ${ASSEMBLY_REGIONS[*]}"
+        region_list="$(printf '"%s",' "${ASSEMBLY_REGIONS[@]}")"
+        if ! "$OPENSCAD" "${QUALITY_ARGS[@]}" "${PARAM_ARGS[@]}" "${VIEW_ARGS[@]}" \
+                -D "dev_assembly_regions=[${region_list%,}]" \
+                --enable=lazy-union \
+                -O export-3mf/color-mode=model \
+                -O export-3mf/material-type=color \
+                -o "$assembly_dir/assembly_preview_regions.3mf" "$dev_bundle" > /dev/null 2>&1; then
+            echo "  OpenSCAD failed to render the assembly preview from $dev_bundle" >&2; exit 1
+        fi
+        if ! "$PYTHON" "$SCRIPTS_DIR/export/multicolor_3mf.py" \
+                "$assembly_dir/assembly_preview_regions.3mf" "$assembly_dir/assembly_preview.3mf" \
+                --reference "$REFERENCE_3MF" --name "assembly_preview.3mf" \
+                "${FILAMENT_MAP_ARGS[@]+"${FILAMENT_MAP_ARGS[@]}"}"; then
+            exit 1
+        fi
+        assembly_file="assembly_preview.3mf"
+    else
+        if ! "$OPENSCAD" "${QUALITY_ARGS[@]}" "${PARAM_ARGS[@]}" "${VIEW_ARGS[@]}" \
+                -o "$assembly_dir/assembly_preview.stl" "$dev_bundle" > /dev/null 2>&1; then
+            echo "  OpenSCAD failed to render the assembly preview from $dev_bundle" >&2; exit 1
+        fi
+        assembly_file="assembly_preview.stl"
     fi
     echo "  not arranging -- keeping mw_assembly_view()'s layout, centered on the bed"
-    bambu_export_plate "$assembly_dir" 0 false false "assembly_preview.stl"
+    bambu_export_plate "$assembly_dir" 0 false false "$assembly_file"
     ASSEMBLE_ARGS+=(--plate "$ASSEMBLY_PLATE_NAME" "$assembly_dir/plate.3mf")
 fi
 

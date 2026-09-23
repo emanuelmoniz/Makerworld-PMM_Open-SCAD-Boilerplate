@@ -76,6 +76,14 @@ module mw_plate_1() {
     translate([-size_x / 2, -size_y / 2, 0])
         color("#1a2f4a") part_template();
 }
+module assembly_region(name) {
+    if (is_undef($assembly_region))
+        children();
+    else if ($assembly_region == "?")
+        echo(str("ASSEMBLY_REGION:", name));
+    else if ($assembly_region == name)
+        children();
+}
 module assembly_view(name) {
     if (name == "main") {
         assembly_main();

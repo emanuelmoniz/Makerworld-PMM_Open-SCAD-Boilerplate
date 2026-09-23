@@ -1,8 +1,14 @@
 # ============================================================
 # CI: build the bundles, verify the tracked bundle is current, lint + smoke
 # ------------------------------------------------------------
-# Runs on Ubuntu with pwsh (PowerShell 7) for the builds and bash for the
-# checks -- the same scripts you run locally (docs/toolchain/platform-contract.md).
+# Runs on every push, pull request and published release, for the root
+# project and the demo (examples/demo), on Ubuntu with pwsh (PowerShell 7) for
+# the builds and bash for the checks -- the same scripts you run locally
+# (docs/toolchain/platform-contract.md).
+# OpenSCAD is the Nightly (development snapshot) from the official OBS apt repo,
+# the recommended build: PMM renders with a recent snapshot + Manifold, which
+# Ubuntu's own 2021.01 package lacks (docs/toolchain/setup.md). find_tools.sh
+# picks `openscad-nightly` from PATH first.
 # BOSL2 is checked out at the commit PMM uses so includes resolve and the
 # lint's BOSL2 name-collision rule (P09) runs.
 # Deterministic because MW_PLATE_SIZE is explicit in scripts/plates_config.sh
@@ -13,10 +19,14 @@ name: check
 on:
   push:
   pull_request:
+  release:
+    types: [published]
+  workflow_dispatch:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    # Pinned: the nightly apt repo is per Ubuntu release.
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -32,9 +42,16 @@ jobs:
         run: |
           if [ -f "${{ matrix.project }}/scripts/project_config.sh" ]; then echo "run=true" >> "$GITHUB_OUTPUT"; else echo "run=false" >> "$GITHUB_OUTPUT"; fi
 
-      - name: Install OpenSCAD
+      - name: Install OpenSCAD Nightly
         if: steps.exists.outputs.run == 'true'
-        run: sudo apt-get update && sudo apt-get install -y openscad
+        run: |
+          . /etc/os-release
+          wget -qO- https://files.openscad.org/OBS-Repository-Key.pub | sudo tee /etc/apt/trusted.gpg.d/obs-openscad-nightly.asc > /dev/null
+          echo "deb https://download.opensuse.org/repositories/home:/t-paul/xUbuntu_${VERSION_ID}/ ./" | sudo tee /etc/apt/sources.list.d/openscad-nightly.list
+          sudo apt-get update
+          sudo apt-get install -y openscad-nightly
+          echo "OPENSCAD_BIN=$(command -v openscad-nightly)" >> "$GITHUB_ENV"
+          openscad-nightly --version
 
       - name: Check out BOSL2 at the PMM commit
         if: steps.exists.outputs.run == 'true'
