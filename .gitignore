@@ -26,6 +26,8 @@
 # Unlike the MakerWorld bundle, this one is a throwaway convenience for
 # opening the whole project in OpenSCAD as a single file. Nothing ships it.
 **/dist/*_dev.scad
+# OpenSCAD customizer parameter sets saved next to the dev bundle (per user)
+**/dist/*_dev.json
 
 # ---- Agent / editor workspace state -------------------------------------
 .claude/

@@ -177,7 +177,12 @@ check_clearances() {
             failures=$((failures + 1)); continue
         fi
         wrapper="$WORKDIR/clearance.scad"
-        printf 'include <%s>\nintersection() {\n    %s\n    %s\n}\n' "$clearance_bundle" "$a" "$b" > "$wrapper"
+        # Each side in its own union(): OpenSCAD drops an `if` whose condition
+        # is false from a node's children, so `intersection() { A; if (c) B; }`
+        # would return all of A when c is false. A union with nothing in it
+        # is an empty child instead, and the intersection is empty.
+        printf 'include <%s>\nintersection() {\n    union() { %s }\n    union() { %s }\n}\n' \
+            "$clearance_bundle" "$a" "$b" > "$wrapper"
         export_stl clearance "$wrapper" "$WORKDIR/clearance.stl" "$@"
         case $? in
             0) got="solid" ;;

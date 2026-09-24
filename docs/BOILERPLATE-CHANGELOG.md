@@ -7,6 +7,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), [SemVer](https
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-09-24
+
+### Fixed
+- Clearance checks: each expression is now wrapped in `union() { }`. OpenSCAD drops an `if` whose
+  condition is false from a node's children, so `intersection() { A; if (c) B; }` returned all of
+  A when `c` was false, and a guarded check reported `solid` instead of `empty`. Found when the
+  first real project (the funnel) imported v1.3.0.
+- `.gitignore`: `**/dist/*_dev.json`, the customizer parameter sets OpenSCAD saves next to the
+  dev bundle, is no longer offered for commit.
+
 ## [1.3.0] - 2026-09-24
 
 ### Added
@@ -132,7 +142,8 @@ a two-color label and a hanging arc).
   root project and `examples/demo` on every push, pull request and published release, using
   **OpenSCAD Nightly** (`openscad-nightly` from the official OBS apt repo).
 
-[Unreleased]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.0.0...v1.1.0
