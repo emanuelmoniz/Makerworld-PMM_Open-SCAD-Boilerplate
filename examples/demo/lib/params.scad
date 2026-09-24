@@ -77,6 +77,16 @@ corner_radius = 2;          // outer vertical-edge rounding
 box_color = "SteelBlue";
 lid_color = "LightSlateGray";
 
+// ---- Build-injected values (placeholders) ----
+// Their real values come from scripts/plates_config.sh (MW_PLATE_SIZE,
+// ASSEMBLY_PLATE_VIEWS): the build REWRITES these two lines in place in both
+// bundles. Declared here, before the derived values, so derived values can
+// use them (OpenSCAD evaluates top-level assignments in order: a variable
+// assigned further down reads as undef), and so standalone previews of
+// single files work. Keep them in step with plates_config.sh.
+mw_plate_size = 235;
+mw_assembly_views = ["main", "open"];
+
 // ---- Layout spacing ----
 // Clear space between stacked views on the assembly preview plate. Which
 // views appear comes from ASSEMBLY_PLATE_VIEWS (scripts/plates_config.sh).

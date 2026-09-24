@@ -222,9 +222,9 @@ function Assert-AssemblyViewsExist {
     }
 }
 
-# The lines both builds append right after params.scad: values that live in
-# scripts/plates_config.sh, so params.scad deliberately defines neither and
-# each is written in exactly one place.
+# The lines both builds inject: values that live in scripts/plates_config.sh,
+# so each is written in exactly one place. See Set-InjectedValues for where
+# they land.
 function Get-BundleInjectedLines {
     param([Parameter(Mandatory = $true)]$Ctx, [Parameter(Mandatory = $true)]$Plates)
     $size = Get-MwPlateSize -Ctx $Ctx
@@ -233,6 +233,31 @@ function Get-BundleInjectedLines {
         "mw_plate_size = $size; // layout bound -- see scripts/plates_config.sh",
         "mw_assembly_views = [$($views -join ', ')]; // ASSEMBLY_PLATE_VIEWS -- see scripts/plates_config.sh"
     )
+}
+
+# Puts the injected values into params.scad's selected lines, in place: when
+# params.scad itself assigns one of them (a placeholder in its [Hidden]
+# section, e.g. `mw_plate_size = 235;`), that line is REPLACED, so derived
+# values below it can read the real value -- OpenSCAD evaluates top-level
+# assignments in order, and a variable assigned further down is undef where
+# it is read. $Lines is modified; the injected lines params.scad does not
+# assign are returned, for the caller to append right after params.scad.
+function Set-InjectedValues {
+    param([System.Collections.Generic.List[string]]$Lines, [string[]]$Injected)
+    $rest = New-Object System.Collections.Generic.List[string]
+    foreach ($inj in $Injected) {
+        $name = ($inj -split '=', 2)[0].Trim()
+        $found = $false
+        for ($i = 0; $i -lt $Lines.Count; $i++) {
+            if ($Lines[$i] -match ('^\s*' + [regex]::Escape($name) + '\s*=')) {
+                $Lines[$i] = $inj
+                $found = $true
+                break
+            }
+        }
+        if (-not $found) { $rest.Add($inj) }
+    }
+    return , $rest
 }
 
 function Get-MwPlateSize {
@@ -360,4 +385,4 @@ function Write-Utf8NoBom {
 Export-ModuleMember -Function Get-ProjectContext, Update-PlatesJson, Assert-PlateModulesMatch,
     Assert-AssemblyViewsExist, Get-BundleInjectedLines, Get-AssemblyViews,
     Get-MwPlateSize, Select-BundleLines, Get-ReadmeDescription, Write-Utf8NoBom, Read-BashConfig,
-    Get-PythonCommand, Invoke-SharedPython
+    Get-PythonCommand, Invoke-SharedPython, Set-InjectedValues

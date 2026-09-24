@@ -21,8 +21,9 @@
 #     syntax (// [..], // font, // color)
 #   - color(<identifier>) calls are flattened to MAKERWORLD_COLOR unless
 #     the identifier is listed in COLOR_PASSTHROUGH
-#   - `mw_plate_size` and `mw_assembly_views` are injected right after
-#     params.scad (values from scripts/plates_config.sh)
+#   - `mw_plate_size` and `mw_assembly_views` (values from
+#     scripts/plates_config.sh) replace params.scad's placeholder lines in
+#     place, or are appended right after params.scad without them
 #   - the README description span is copied into the header comment
 #   - MAKERWORLD_TOP_LEVEL_CALL (if set) is appended as the last line
 # Then the parameter tables of the files in PARAM_TABLES are regenerated
@@ -82,12 +83,11 @@ foreach ($file in $ctx.SourceFiles) {
     $lines = @(Get-Content -Path $path -Encoding UTF8)
 
     $bundle.Add("// ---- from $file ----")
-    foreach ($l in (Select-BundleLines -Lines $lines -IsParams $isParams -Mode "makerworld" -Ctx $ctx)) {
-        $bundle.Add($l)
-    }
-    if ($isParams) {
-        foreach ($l in $injected) { $bundle.Add($l) }
-    }
+    $selected = Select-BundleLines -Lines $lines -IsParams $isParams -Mode "makerworld" -Ctx $ctx
+    $rest = @()
+    if ($isParams) { $rest = Set-InjectedValues -Lines $selected -Injected $injected }
+    foreach ($l in $selected) { $bundle.Add($l) }
+    foreach ($l in $rest) { $bundle.Add($l) }
     $bundle.Add("")
 }
 

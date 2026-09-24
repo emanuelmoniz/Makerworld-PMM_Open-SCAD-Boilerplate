@@ -135,7 +135,8 @@ The full rationale is in the linked docs. These are the ones that fail silently.
   (`+0.01`, `+1`) prevent coincident faces. Don't "clean them up".
   → [geometry](docs/conventions/geometry.md)
 - **Parts are authored at their outer front-left-bottom corner, in print orientation.** Assemblies
-  move them into place.
+  move them into place. Parts of revolution may be centered on their axis instead
+  ([geometry](docs/conventions/geometry.md#1-origin-and-orientation)); say so in the part's header.
 - **PMM customizer syntax:** a user-facing color must be a hex string with `// color`; a user-facing
   font needs `// font` and must be in PMM's **installed** inventory (`docs/pmm/data/`), not just its
   display catalog. `// preview[...]` doesn't work in PMM. → [specification](docs/pmm/specification.md)

@@ -38,6 +38,13 @@
 #
 # Usage:
 #   scripts/export/export_3mf.sh [-p project_dir] [-c export_config.sh]
+#                                [-D 'param=value' ...] [-o output.3mf]
+#   -D  one more parameter override for this run only, on top of
+#       PARAM_OVERRIDES (repeatable; strings keep their quotes:
+#       -D 'label="OIL"')
+#   -o  write to this file instead of OUTPUT, e.g. .build/test.3mf
+#   A one-off test export then needs no edit to export_3mf_config.sh:
+#     bash scripts/export/export_3mf.sh -D 'handle="none"' -o .build/test.3mf
 # Requires: OpenSCAD, Bambu Studio, Python 3 (stdlib) -- see find_tools.sh
 # See: docs/toolchain/pipelines.md ("3MF export")
 # ============================================================
@@ -49,11 +56,15 @@ source "$SCRIPTS_DIR/shared/find_tools.sh"
 
 PROJECT_DIR="$REPO_ROOT"
 CONFIG=""
+EXTRA_OVERRIDES=()
+OUTPUT_OVERRIDE=""
 while [ "$#" -gt 0 ]; do
     case "$1" in
         -p|--project) PROJECT_DIR="$(cd "$REPO_ROOT" && cd "$2" && pwd)"; shift 2 ;;
         -c|--config)  CONFIG="$2"; shift 2 ;;
-        *) echo "Usage: export_3mf.sh [-p project_dir] [-c config.sh]" >&2; exit 1 ;;
+        -D|--define)  EXTRA_OVERRIDES+=("$2"); shift 2 ;;
+        -o|--output)  OUTPUT_OVERRIDE="$2"; shift 2 ;;
+        *) echo "Usage: export_3mf.sh [-p project_dir] [-c config.sh] [-D 'param=value' ...] [-o output.3mf]" >&2; exit 1 ;;
     esac
 done
 CONFIG="${CONFIG:-$PROJECT_DIR/scripts/export_3mf_config.sh}"
@@ -65,6 +76,9 @@ require_tool PYTHON "Python 3" "PYTHON_BIN"
 
 # shellcheck disable=SC1090
 source "$CONFIG"
+# Command-line -D / -o win over the config, for this run only.
+PARAM_OVERRIDES+=("${EXTRA_OVERRIDES[@]+"${EXTRA_OVERRIDES[@]}"}")
+[ -n "$OUTPUT_OVERRIDE" ] && OUTPUT="$OUTPUT_OVERRIDE"
 # shellcheck disable=SC1091
 source "$PROJECT_DIR/scripts/project_config.sh"   # PROJECT_SLUG
 cd "$PROJECT_DIR"

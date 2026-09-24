@@ -10,7 +10,8 @@
    like the file ([naming.md](../conventions/naming.md#load-bearing-rules-tooling-breaks-without-them)).
    Make sure the name can't collide with a library symbol.
 3. **Model it** following [geometry.md](../conventions/geometry.md): origin at the outer
-   front-left-bottom corner, print orientation, clearances on the mating cavity, overlaps on cuts.
+   front-left-bottom corner (or on its axis, for a part of revolution), print orientation,
+   clearances on the mating cavity, overlaps on cuts.
    Any new dimension goes into `lib/params.scad` ([add-a-parameter.md](add-a-parameter.md)).
 4. **Keep the standalone preview** at the end of the file, inside `BUILD:EXCLUDE-START/-END`.
 5. **Register it in the bundle.** Add it to `SOURCE_FILES` (`scripts/project_config.sh`), after

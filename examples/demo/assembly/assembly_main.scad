@@ -130,7 +130,5 @@ module mw_assembly_view() {
 }
 
 // BUILD:EXCLUDE-START (standalone preview only; stripped from every bundle)
-mw_plate_size = 235;                    // the build injects the real values
-mw_assembly_views = ["main", "open"];   // into both bundles
 assembly_main();
 // BUILD:EXCLUDE-END

@@ -67,15 +67,23 @@ README description.
 
 ## Injected values: `mw_plate_size`, `mw_assembly_views`
 
-Neither is defined in `params.scad`. The build injects both right after it, from
-`scripts/plates_config.sh`, so each value is written in exactly one place:
+Both come from `scripts/plates_config.sh`, so each value is written in exactly one place.
+`params.scad` declares them as **placeholders** in its `[Hidden]` section, before the derived
+values, and the build **rewrites those lines in place** in both bundles:
 
 | Variable | From | Read by |
 |---|---|---|
 | `mw_plate_size` | `MW_PLATE_SIZE` (section 1) | plate modules that wrap parts into rows |
 | `mw_assembly_views` | `ASSEMBLY_PLATE_VIEWS` (section 3) | `mw_assembly_view()` |
 
-Standalone previews that need them define fallbacks inside their `BUILD:EXCLUDE` block.
+Why placeholders instead of appending them after `params.scad`: OpenSCAD evaluates top-level
+assignments in order, and a variable assigned further down the file reads as **undef** where it
+is used. With the placeholder above the derived section, a derived value can depend on the plate
+size (e.g. "the longest handle that still fits the plate"). The placeholders also make standalone
+previews of single files work without fallbacks. Keep their values in step with
+`plates_config.sh`; the bundles always get the configured ones. A `params.scad` without the
+placeholders still works: the build then appends the two lines right after it, as before, and
+standalone previews that need them define fallbacks in their `BUILD:EXCLUDE` block.
 
 ## The assembly preview pattern
 

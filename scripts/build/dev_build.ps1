@@ -87,10 +87,11 @@ foreach ($file in $ctx.SourceFiles) {
     if (-not (Test-Path $path)) { throw "Source file not found (SOURCE_FILES): $file" }
     $isParams = ($file -eq $ctx.ParamsFile)
     $b.Add("// ---- from $file ----")
-    foreach ($l in (Select-BundleLines -Lines @(Get-Content -Path $path -Encoding UTF8) -IsParams $isParams -Mode "dev" -Ctx $ctx)) {
-        $b.Add($l)
-    }
-    if ($isParams) { foreach ($l in $injected) { $b.Add($l) } }
+    $selected = Select-BundleLines -Lines @(Get-Content -Path $path -Encoding UTF8) -IsParams $isParams -Mode "dev" -Ctx $ctx
+    $rest = @()
+    if ($isParams) { $rest = Set-InjectedValues -Lines $selected -Injected $injected }
+    foreach ($l in $selected) { $b.Add($l) }
+    foreach ($l in $rest) { $b.Add($l) }
     $b.Add("")
 }
 

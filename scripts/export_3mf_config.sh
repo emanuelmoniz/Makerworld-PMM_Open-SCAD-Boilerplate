@@ -25,6 +25,8 @@
 # ---- 1. PARAMETER OVERRIDES -----------------------------------------------
 # Same convention as render_config.sh: OpenSCAD -D flags, applied to every
 # part. Omitted = params.scad default.
+# For a one-off test, prefer export_3mf.sh -D 'param=value' -o .build/x.3mf
+# over editing this list (docs/toolchain/pipelines.md, "3MF export").
 PARAM_OVERRIDES=(
     # "size_x=60"
 )

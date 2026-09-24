@@ -13,6 +13,14 @@
   why.
 - If a part extends past its nominal footprint (a flap, a flange), expose its real footprint and
   offset as derived values in `params.scad`, and use those to center it on its plate.
+- **Exception: parts of revolution** (funnels, cups, knobs, lids, anything built with
+  `rotate_extrude()`) may be authored **centered on their axis** instead, bottom still at `Z = 0`
+  and still in print orientation. A corner origin would only add a translate on the way in and one
+  on the way out, and features placed by angle (a handle at 45°) are naturally described around the
+  axis. Say so in the part's header and in `AGENTS.md`'s project overview, expose the footprint
+  (radius, plus anything sticking out) as derived values, and let `mw_plate_N()` rotate the part
+  about its axis and center it on the plate from that footprint. Front and back still follow
+  OpenSCAD's view: FRONT is `-Y`.
 
 ## 2. Clearances widen the cavity, never shrink the part
 
@@ -57,6 +65,28 @@ The lid stays `lid_thickness`.
 - A module whose geometry changes with a mode flag takes the value as an argument defaulting to
   the parameter (`module cap(half_len = key_half_length)`). Callers can then build variants
   without touching global state.
+
+### Clamp, then say so
+
+A customizer lets customers combine values that don't work together: a tab too long for the
+plate, text too big for its band, a groove deeper than the wall. Don't fail and don't silently
+build something else. **Clamp** the value in the derived section (`x = min(asked, limit);`), use
+the clamped value everywhere, and **tell the customer** with a `NOTE:` in the console:
+
+```openscad
+function param_note(adjusted, msg) = adjusted ? echo(str("NOTE: ", msg)) true : false;
+param_notes = [
+    param_note(tab_l != tab_length, str("tab_length limited to ", tab_l, " mm to fit the plate")),
+    param_note(text_s != text_size, str("text_size limited to ", text_s, " mm")),
+];
+```
+
+The echo sits inside an **assignment**: a top-level `if (...) echo(...)` would trip lint rule P12
+(top-level statements next to `mw_plate_N()`). Say in the parameter's help text that it may be
+limited ("Limited so it fits the plate"), so the customer isn't surprised. When one limit
+depends on the plate size, read `mw_plate_size` from its placeholder in `params.scad`
+([source-architecture](source-architecture.md#injected-values-mw_plate_size-mw_assembly_views)).
+Cover the clamps with `SMOKE_VARIANTS` entries at the extremes.
 
 ## 6. Performance (PMM timeouts)
 

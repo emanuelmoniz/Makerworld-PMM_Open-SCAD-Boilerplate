@@ -42,12 +42,17 @@ fit_clearance = 0.15; // [0:0.05:0.6]
 /* [Hidden] */
 corner_radius = 3;
 part_color = "SteelBlue";
+mw_plate_size = 235; // layout bound -- see scripts/plates_config.sh
+mw_assembly_views = ["main"]; // ASSEMBLY_PLATE_VIEWS -- see scripts/plates_config.sh
 assembly_view_gap = 30;
 $fa = 2;
 $fs = 0.4;
 effective_radius = rounded ? min(corner_radius, size_x / 2, size_y / 2) : 0;
-mw_plate_size = 235; // layout bound -- see scripts/plates_config.sh
-mw_assembly_views = ["main"]; // ASSEMBLY_PLATE_VIEWS -- see scripts/plates_config.sh
+function param_note(adjusted, msg) = adjusted ? echo(str("NOTE: ", msg)) true : false;
+param_notes = [
+    param_note(rounded && effective_radius < corner_radius,
+        str("corner radius reduced to ", effective_radius, " mm to fit the size")),
+];
 
 // ---- from lib/helpers.scad ----
 module rounded_block(size, r = 0) {

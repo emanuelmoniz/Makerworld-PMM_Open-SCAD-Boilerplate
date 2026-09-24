@@ -7,6 +7,33 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), [SemVer](https
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-24
+
+### Added
+- `params.scad` may declare `mw_plate_size` and `mw_assembly_views` as **placeholders** in its
+  `[Hidden]` section; the build rewrites them in place (new `Set-InjectedValues` in
+  `Bundle.psm1`, used by both builds) instead of appending them after the file. Derived values
+  can now use the plate size: before, anything computed in `params.scad` read it as undef,
+  because OpenSCAD evaluates top-level assignments in order. Without placeholders the build
+  appends the lines as before. The root template and the demo declare them, so their assembly
+  previews drop the `BUILD:EXCLUDE` fallbacks.
+- "Clamp, then say so" pattern (`docs/conventions/geometry.md`): clamp an impossible customer
+  value in the derived section and print a `NOTE:` with `param_note()`, an echo inside an
+  assignment (a top-level `if/echo` trips lint P12). The template `params.scad` ships the helper
+  with an example.
+- `export_3mf.sh -D 'param=value'` (repeatable) and `-o file`: a one-off test export without
+  editing `export_3mf_config.sh`.
+- Release workflow: GitHub release step (`gh release create` with the changelog section as notes
+  and the bundle, 3MF and STLs attached).
+
+### Changed
+- Geometry convention: parts of revolution may be authored centered on their axis instead of at
+  the front-left-bottom corner (`geometry.md` §1, `AGENTS.md`, `add-a-part.md`, part template).
+
+### Fixed
+- `.gitattributes`: the `.githooks/*` rule had a trailing comment, which git reads as attribute
+  names ("# is not a valid attribute name"). The LF rule itself applied.
+
 ## [1.1.0] - 2026-09-24
 
 Lessons from the first project built on the template (a parametric funnel with optional parts,
@@ -85,6 +112,7 @@ a two-color label and a hanging arc).
   root project and `examples/demo` on every push, pull request and published release, using
   **OpenSCAD Nightly** (`openscad-nightly` from the official OBS apt repo).
 
-[Unreleased]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/releases/tag/v1.0.0

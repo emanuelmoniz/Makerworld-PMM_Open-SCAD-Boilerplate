@@ -20,6 +20,18 @@
 7. **Assets (only if geometry changed and the user asked):** re-render images
    (`scripts\render.bat`), re-export default STLs into `stl/`, regenerate or re-save curated
    `printables/`. Delete stale ones.
-8. **Commit:** `Bump to vX.Y.Z: <summary>`.
+8. **Commit:** `Bump to vX.Y.Z: <summary>`. The pre-commit hook refuses it if the bundle or a
+   parameter table is stale: rebuild, stage, commit again.
 9. **Tag:** `git tag vX.Y.Z` and push the commit and tag when asked.
-10. **Publish:** [publish-to-makerworld.md](publish-to-makerworld.md).
+10. **GitHub release** (when asked): the notes are this version's `CHANGELOG.md` section, and the
+    assets are what someone downloading the release needs without cloning:
+
+    ```sh
+    # notes.md = the body of the "## [x.y.z]" section of CHANGELOG.md
+    gh release create vX.Y.Z --title "vX.Y.Z: <summary>" --notes-file notes.md \
+        dist/<slug>_makerworld.scad printables/<slug>_generated.3mf stl/*.stl
+    ```
+
+    Attach only files that match this release: skip `printables/` and `stl/` if they weren't
+    regenerated. Then watch CI on the tag (`gh run list`): it runs on the release too.
+11. **Publish:** [publish-to-makerworld.md](publish-to-makerworld.md).

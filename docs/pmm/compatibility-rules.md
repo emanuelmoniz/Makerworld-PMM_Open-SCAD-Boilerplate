@@ -132,6 +132,10 @@ reported by Bambu staff is about **240 × 235 mm**.
 With `mw_plate_N()` defined, PMM renders plates itself. Extra top-level geometry is at best
 ignored and at worst duplicated. Leave `MAKERWORLD_TOP_LEVEL_CALL` empty when you use plates.
 
+Any top-level statement counts, including a plain `if (...) echo(...)` in `params.scad`. To print
+customer notes, echo inside an assignment instead
+([geometry.md, "Clamp, then say so"](../conventions/geometry.md#clamp-then-say-so)).
+
 ## Timeouts  *(Community)*
 
 PMM has practical runtime limits. Geometry that eventually renders locally can still time out.

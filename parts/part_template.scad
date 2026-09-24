@@ -12,7 +12,8 @@
 //   5. document it: README "Parts to print" table, CHANGELOG [Unreleased]
 //
 // CONVENTIONS (docs/conventions/geometry.md):
-//   - Author the part with its outer FRONT-LEFT-BOTTOM corner at (0,0,0),
+//   - Author the part with its outer FRONT-LEFT-BOTTOM corner at (0,0,0)
+//     (a part of revolution may be centered on its axis instead; say so),
 //     in its PRINT orientation (flat face down, support-free if possible).
 //     Assembly files rotate/translate it into its assembled pose.
 //   - Clearances WIDEN THE CAVITY, never shrink the nominal part.

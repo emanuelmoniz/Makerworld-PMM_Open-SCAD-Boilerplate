@@ -68,6 +68,8 @@ notch_radius = 6;
 corner_radius = 2;
 box_color = "SteelBlue";
 lid_color = "LightSlateGray";
+mw_plate_size = 235; // layout bound -- see scripts/plates_config.sh
+mw_assembly_views = ["main", "open"]; // ASSEMBLY_PLATE_VIEWS -- see scripts/plates_config.sh
 assembly_view_gap = 20;
 $fa = 2;
 $fs = 0.4;
@@ -84,8 +86,6 @@ lid_width  = inner_width + 2 * groove_depth;
 lid_x = wall - groove_depth;
 lid_y = wall - groove_depth;
 lid_z = groove_z + lid_clearance;
-mw_plate_size = 235; // layout bound -- see scripts/plates_config.sh
-mw_assembly_views = ["main", "open"]; // ASSEMBLY_PLATE_VIEWS -- see scripts/plates_config.sh
 
 // ---- from lib/shapes.scad ----
 module rounded_block(size, r = 0) {

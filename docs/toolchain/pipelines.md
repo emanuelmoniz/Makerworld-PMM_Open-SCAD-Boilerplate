@@ -63,7 +63,9 @@ to the project folder.
      widget annotations (`// [..]`, `// color`, `// font`); the `// @label:` / `// @note:` lines
      are dropped too (they only feed the parameter tables)
    - rewrite `color(<var>)` to `MAKERWORLD_COLOR` unless `<var>` is in `COLOR_PASSTHROUGH`
-5. Inject `mw_plate_size = N;` and `mw_assembly_views = [...];` right after `params.scad`.
+5. Inject `mw_plate_size = N;` and `mw_assembly_views = [...];`: rewrite `params.scad`'s own
+   placeholder line for each, in place, or append the line right after `params.scad` when there
+   is none ([source-architecture](../conventions/source-architecture.md#injected-values-mw_plate_size-mw_assembly_views)).
 6. Prepend the README `BUNDLE-DESCRIPTION` span as a header comment.
 7. Append `MAKERWORLD_TOP_LEVEL_CALL` if set (single-part models).
 8. Write UTF-8 without BOM.
@@ -127,7 +129,12 @@ ratios. **Agents never render unless asked** (AGENTS.md).
 
 ## 3MF export (optional, Bambu Studio)
 
-`scripts\export_3mf.bat` · `scripts/export/export_3mf.sh [-p dir] [-c config]` → `OUTPUT`
+`scripts\export_3mf.bat` · `scripts/export/export_3mf.sh [-p dir] [-c config] [-D 'param=value' ...] [-o file]` → `OUTPUT`
+
+For a one-off test, `-D` adds a parameter override on top of `PARAM_OVERRIDES` (repeatable) and
+`-o` writes somewhere other than `OUTPUT`, so `export_3mf_config.sh` stays untouched:
+`bash scripts/export/export_3mf.sh -D 'handle="none"' -o .build/test.3mf`. (The `.bat` wrapper
+only takes a project folder; quoted `-D` values are easiest from Git Bash.)
 
 1. Resolve `PRINTER`'s real bed (`printer_bed.py` walks Bambu's preset inheritance).
 2. Per plate: export each part to STL — or, for a part marked `|multicolor=1`, to a Bambu object

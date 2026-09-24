@@ -35,10 +35,9 @@
 //   2. [Hidden] constants   (fixed design values)
 //   3. [Hidden] derived     (computed ONCE here, read everywhere)
 //
-// `mw_plate_size` and `mw_assembly_views` are deliberately NOT defined here:
-// the build injects both right after this file (scripts/plates_config.sh:
-// MW_PLATE_SIZE, ASSEMBLY_PLATE_VIEWS). Standalone previews of individual
-// files that need them must define fallbacks in their BUILD:EXCLUDE block.
+// `mw_plate_size` and `mw_assembly_views` live in scripts/plates_config.sh;
+// their lines in the [Hidden] section are placeholders the build rewrites
+// in place (see "Build-injected values" below).
 //
 // See: docs/workflows/add-a-parameter.md, docs/conventions/naming.md
 // ============================================================
@@ -76,6 +75,16 @@ corner_radius = 3;
 // customers must be a hex string with a trailing `// color` comment.
 part_color = "SteelBlue";
 
+// ---- Build-injected values (placeholders) ----
+// Their real values come from scripts/plates_config.sh (MW_PLATE_SIZE,
+// ASSEMBLY_PLATE_VIEWS): the build REWRITES these two lines in place in both
+// bundles. Declared here, before the derived values, so derived values can
+// use them (OpenSCAD evaluates top-level assignments in order: a variable
+// assigned further down reads as undef), and so standalone previews of
+// single files work. Keep them in step with plates_config.sh.
+mw_plate_size = 235;
+mw_assembly_views = ["main"];
+
 // ---- Layout spacing ----
 // Clear space between consecutive assembled views' bounding boxes on the
 // assembly preview plate (mw_assembly_view()). WHICH views appear is not set
@@ -93,3 +102,16 @@ $fs = 0.4;
 // Compute here, once, as plain top-level variables. Never recompute a
 // derived value inside a part file -- read it from here instead.
 effective_radius = rounded ? min(corner_radius, size_x / 2, size_y / 2) : 0;
+
+// ---- Telling the customer about adjusted values ----
+// When a derived value clamps what the customer asked for, say so: the
+// NOTE shows in PMM's and OpenSCAD's console. Echo EXPRESSIONS inside an
+// assignment, not top-level `if (...) echo(...)` statements -- lint rule
+// P12 counts top-level statements as geometry next to the mw_plate_N()
+// modules. One param_note() per adjustment; the list itself is unused.
+// (docs/conventions/geometry.md, "Clamp, then say so")
+function param_note(adjusted, msg) = adjusted ? echo(str("NOTE: ", msg)) true : false;
+param_notes = [
+    param_note(rounded && effective_radius < corner_radius,
+        str("corner radius reduced to ", effective_radius, " mm to fit the size")),
+];
