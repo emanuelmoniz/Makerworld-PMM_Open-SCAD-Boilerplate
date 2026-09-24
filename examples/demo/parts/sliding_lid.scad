@@ -49,14 +49,20 @@ module sliding_lid_body() {
 
 // Region 2: the raised label, in label_color. Empty unless the label is
 // embossed -- with label_style=none or engraved the lid is a one-color
-// part and the export says so instead of failing.
+// part and the export says so instead of failing. Clipped to the lid's
+// footprint, so a long or large label never overhangs it (an engraved one
+// is clipped by the lid itself). color() wraps the whole intersection.
 module sliding_lid_label() {
     label_center = sliding_lid_label_center();
 
     if (label_style == "embossed")
         color(label_color)
-            translate([label_center[0], label_center[1], lid_thickness - 0.01])
-                label_solid(label_text, label_size, label_font, label_depth + 0.01);
+            intersection() {
+                translate([label_center[0], label_center[1], lid_thickness - 0.01])
+                    label_solid(label_text, label_size, label_font, label_depth + 0.01);
+                translate([0, 0, lid_thickness - 0.02])
+                    cube([lid_length, lid_width, label_depth + 0.04]);
+            }
 }
 
 module sliding_lid() {

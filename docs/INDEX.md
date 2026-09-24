@@ -68,4 +68,5 @@
 | `scripts/project_config.sh` | its header, [pipelines](toolchain/pipelines.md#config-files) |
 | `scripts/plates_config.sh` | its header, [pipelines](toolchain/pipelines.md#makerworld-bundle) |
 | `scripts/check/pmm_lint.py` | its header, [compatibility-rules](pmm/compatibility-rules.md) |
+| `scripts/check/fresh.sh`, `scripts/shared/param_tables.py` | their headers, [pipelines](toolchain/pipelines.md#checks) |
 | `dist/makerworld_listing.md` | its header comment, [documentation](conventions/documentation.md) |

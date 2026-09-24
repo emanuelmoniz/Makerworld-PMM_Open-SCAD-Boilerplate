@@ -106,3 +106,31 @@ DEV_VIEWS=(
     "mw_assembly_view:MakerWorld assembly view"
     "mw_plate_1:Plate 1"
 )
+
+# ---- 8. GENERATED PARAMETER TABLES ----------------------------------------
+# "file|style" entries: files whose parameter table is generated from
+# PARAMS_FILE by the MakerWorld build (scripts/shared/param_tables.py),
+# between the lines <!-- PARAMETERS:START --> and <!-- PARAMETERS:END -->.
+# The freshness check fails when a table no longer matches params.scad.
+#   readme   one table per tab: variable | description | default | range
+#   listing  customer table: label | description | compatibility
+# Labels and the compatibility column come from optional `// @label:` and
+# `// @note:` lines above a parameter's help line (docs/workflows/
+# add-a-parameter.md). Remove an entry to maintain that table by hand.
+PARAM_TABLES=(
+    "README.md|readme"
+    "dist/makerworld_listing.md|listing"
+)
+
+# ---- 9. SMOKE VARIANTS ----------------------------------------------------
+# Extra parameter sets the smoke check builds every plate (and the assembly
+# preview) with, on top of the defaults: "name|param=value; param=value".
+# Each assignment is one -D, so values may contain spaces; strings keep
+# their escaped quotes. Cover the extremes: min and max sizes, every
+# dropdown option, every optional feature on and off. Every variant costs a
+# full render of every plate, locally and in CI.
+SMOKE_VARIANTS=(
+    # "smallest|size_x=10; size_y=10; size_z=2"
+    # "largest|size_x=200; size_y=200; size_z=100"
+    # "square edges|rounded=false"
+)

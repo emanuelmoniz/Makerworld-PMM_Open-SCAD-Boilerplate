@@ -18,6 +18,12 @@
 #      mw_assembly_view() is built the same way when ASSEMBLY_PLATE_VIEWS is
 #      set: it must compile and not be empty (no size limit -- a preview).
 #
+#   3. VARIANTS -- stage 2 again for every entry of SMOKE_VARIANTS
+#      (scripts/project_config.sh), each a set of parameter overrides passed
+#      as -D: extreme sizes, every dropdown option, optional features on and
+#      off. Same failures as stage 2; an empty plate or preview is reported,
+#      not failed, since a variant may switch a part off.
+#
 # OpenSCAD WARNINGs are printed but do not fail the check; ERRORs and
 # failed exports do. Uses a full CGAL/Manifold render, so it takes as long
 # as rendering every part once.
@@ -50,10 +56,10 @@ WORKDIR="$(mktemp -d)"
 trap 'rm -rf "$WORKDIR"' EXIT
 failures=0
 
-# export <label> <scad file> <stl out>  -> 0 ok, 1 failed, 2 empty
+# export <label> <scad file> <stl out> [openscad args]  -> 0 ok, 1 failed, 2 empty
 export_stl() {
     local log="$WORKDIR/log.txt"
-    "$OPENSCAD" --render -o "$3" "$2" > "$log" 2>&1
+    "$OPENSCAD" --render "${@:4}" -o "$3" "$2" > "$log" 2>&1
     local status=$?
     grep -E "^(WARNING|DEPRECATED)" "$log" | sed "s/^/        /" | head -5
     # Unresolvable includes/modules are real failures even though OpenSCAD
@@ -83,6 +89,71 @@ for src in "${SOURCE_FILES[@]}"; do
 done
 
 BUNDLE="dist/${PROJECT_SLUG}_makerworld.scad"
+
+# Builds every output of the shipped bundle -- each mw_plate_N() (footprint
+# checked against mw_plate_size), the top-level call of a plate-less bundle,
+# and mw_assembly_view() when views are configured -- with the given
+# OpenSCAD args (-D overrides). $1 is a tag for the messages ("" = defaults).
+check_outputs() {
+    local tag="$1"; shift
+    local pre="" what="default parameters"
+    [ -n "$tag" ] && { pre="[$tag] "; what="these parameters"; }
+
+    if [ -z "$plates" ]; then
+        if [ -n "${MAKERWORLD_TOP_LEVEL_CALL:-}" ]; then
+            export_stl bundle "$BUNDLE" "$WORKDIR/bundle.stl" "$@"
+            case $? in
+                0) echo "  ok     ${pre}top-level call" ;;
+                2) echo "  empty  ${pre}top-level call  (renders nothing with $what)" ;;
+                *) echo "  FAIL   ${pre}top-level call"; failures=$((failures + 1)) ;;
+            esac
+        fi
+    fi
+    local plate wrapper over dx dy dz
+    for plate in $plates; do
+        wrapper="$WORKDIR/${plate}.scad"
+        printf 'include <%s>\n%s();\n' "$abs_bundle" "$plate" > "$wrapper"
+        export_stl "$plate" "$wrapper" "$WORKDIR/${plate}.stl" "$@"
+        case $? in
+            0)
+                read -r dx dy dz < <("$PYTHON" "$SCRIPTS_DIR/shared/stl_bbox.py" --extents "$WORKDIR/${plate}.stl" | tr -d '\r') || true
+                over="$(awk -v x="$dx" -v y="$dy" -v s="${plate_size:-0}" 'BEGIN { print (s > 0 && (x > s || y > s)) ? 1 : 0 }')"
+                if [ "$over" = "1" ]; then
+                    echo "  FAIL   ${pre}$plate  footprint ${dx} x ${dy} mm exceeds mw_plate_size ${plate_size}"
+                    failures=$((failures + 1))
+                else
+                    echo "  ok     ${pre}$plate  (${dx} x ${dy} x ${dz} mm)"
+                fi
+                ;;
+            2) echo "  empty  ${pre}$plate  (renders nothing with $what -- fine if intended)" ;;
+            *) echo "  FAIL   ${pre}$plate"; failures=$((failures + 1)) ;;
+        esac
+    done
+
+    # Assembly preview: must compile and show something when views are
+    # configured. No size check -- a preview may be larger than the bed.
+    if [ "$has_views" = "1" ]; then
+        wrapper="$WORKDIR/mw_assembly_view.scad"
+        printf 'include <%s>\nmw_assembly_view();\n' "$abs_bundle" > "$wrapper"
+        export_stl mw_assembly_view "$wrapper" "$WORKDIR/mw_assembly_view.stl" "$@"
+        case $? in
+            0)
+                read -r dx dy dz < <("$PYTHON" "$SCRIPTS_DIR/shared/stl_bbox.py" --extents "$WORKDIR/mw_assembly_view.stl" | tr -d '\r') || true
+                echo "  ok     ${pre}mw_assembly_view  (${dx} x ${dy} x ${dz} mm; ${views_line%%;*})"
+                ;;
+            2)
+                if [ -n "$tag" ]; then
+                    echo "  empty  ${pre}mw_assembly_view  (renders nothing with $what)"
+                else
+                    echo "  FAIL   mw_assembly_view renders nothing although views are configured"
+                    failures=$((failures + 1))
+                fi
+                ;;
+            *) echo "  FAIL   ${pre}mw_assembly_view"; failures=$((failures + 1)) ;;
+        esac
+    fi
+}
+
 echo "== Stage 2: shipped bundle ($BUNDLE)"
 if [ ! -f "$BUNDLE" ]; then
     echo "  FAIL   bundle missing -- run the MakerWorld build first"
@@ -90,55 +161,38 @@ if [ ! -f "$BUNDLE" ]; then
 else
     plate_size="$(sed -nE 's/^mw_plate_size = ([0-9.]+);.*/\1/p' "$BUNDLE" | head -1)"
     plates="$(sed -nE 's/^[[:space:]]*module[[:space:]]+(mw_plate_[0-9]+)[[:space:]]*\(.*/\1/p' "$BUNDLE")"
-    if [ -z "$plates" ]; then
-        if [ -n "${MAKERWORLD_TOP_LEVEL_CALL:-}" ]; then
-            export_stl bundle "$BUNDLE" "$WORKDIR/bundle.stl"
-            [ $? -eq 0 ] && echo "  ok     top-level call" || { echo "  FAIL   top-level call"; failures=$((failures + 1)); }
-        else
-            echo "  FAIL   bundle defines no mw_plate_N() and MAKERWORLD_TOP_LEVEL_CALL is empty -- PMM would render nothing"
-            failures=$((failures + 1))
-        fi
+    if [ -z "$plates" ] && [ -z "${MAKERWORLD_TOP_LEVEL_CALL:-}" ]; then
+        echo "  FAIL   bundle defines no mw_plate_N() and MAKERWORLD_TOP_LEVEL_CALL is empty -- PMM would render nothing"
+        failures=$((failures + 1))
     fi
     abs_bundle="$(cd "$(dirname "$BUNDLE")" && pwd)/$(basename "$BUNDLE")"
     # The path is written INSIDE a file, where Git Bash's automatic path
     # conversion does not apply -- native Windows OpenSCAD needs C:/... form.
     command -v cygpath >/dev/null 2>&1 && abs_bundle="$(cygpath -m "$abs_bundle")"
-    for plate in $plates; do
-        wrapper="$WORKDIR/${plate}.scad"
-        printf 'include <%s>\n%s();\n' "$abs_bundle" "$plate" > "$wrapper"
-        export_stl "$plate" "$wrapper" "$WORKDIR/${plate}.stl"
-        case $? in
-            0)
-                read -r dx dy dz < <("$PYTHON" "$SCRIPTS_DIR/shared/stl_bbox.py" --extents "$WORKDIR/${plate}.stl" | tr -d '\r') || true
-                over="$(awk -v x="$dx" -v y="$dy" -v s="${plate_size:-0}" 'BEGIN { print (s > 0 && (x > s || y > s)) ? 1 : 0 }')"
-                if [ "$over" = "1" ]; then
-                    echo "  FAIL   $plate  footprint ${dx} x ${dy} mm exceeds mw_plate_size ${plate_size}"
-                    failures=$((failures + 1))
-                else
-                    echo "  ok     $plate  (${dx} x ${dy} x ${dz} mm)"
-                fi
-                ;;
-            2) echo "  empty  $plate  (renders nothing with default parameters -- fine if intended)" ;;
-            *) echo "  FAIL   $plate"; failures=$((failures + 1)) ;;
-        esac
-    done
-
-    # Assembly preview: must compile and show something when views are
-    # configured. No size check -- a preview may be larger than the bed.
     views_line="$(grep -E '^mw_assembly_views = ' "$BUNDLE" | head -1)"
+    has_views=0
     if grep -qE '^[[:space:]]*module[[:space:]]+mw_assembly_view[[:space:]]*\(' "$BUNDLE" \
             && [ -n "$views_line" ] && ! echo "$views_line" | grep -q '= \[\]'; then
-        wrapper="$WORKDIR/mw_assembly_view.scad"
-        printf 'include <%s>\nmw_assembly_view();\n' "$abs_bundle" > "$wrapper"
-        export_stl mw_assembly_view "$wrapper" "$WORKDIR/mw_assembly_view.stl"
-        case $? in
-            0)
-                read -r dx dy dz < <("$PYTHON" "$SCRIPTS_DIR/shared/stl_bbox.py" --extents "$WORKDIR/mw_assembly_view.stl" | tr -d '\r') || true
-                echo "  ok     mw_assembly_view  (${dx} x ${dy} x ${dz} mm; ${views_line%%;*})"
-                ;;
-            2) echo "  FAIL   mw_assembly_view renders nothing although views are configured"; failures=$((failures + 1)) ;;
-            *) echo "  FAIL   mw_assembly_view"; failures=$((failures + 1)) ;;
-        esac
+        has_views=1
+    fi
+
+    check_outputs ""
+
+    # ---- Stage 3: parameter variants (SMOKE_VARIANTS) ----
+    # Entry: "name|param=value; param=value; ...". Each assignment becomes
+    # one -D, so values may contain spaces; strings keep their quotes.
+    if [ -n "${SMOKE_VARIANTS[*]:-}" ]; then
+        echo "== Stage 3: parameter variants (SMOKE_VARIANTS)"
+        for entry in "${SMOKE_VARIANTS[@]}"; do
+            name="${entry%%|*}"
+            vargs=()
+            IFS=';' read -ra assignments <<< "${entry#*|}"
+            for a in "${assignments[@]}"; do
+                a="$(echo "$a" | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')"
+                [ -n "$a" ] && vargs+=(-D "$a")
+            done
+            check_outputs "$name" "${vargs[@]}"
+        done
     fi
 fi
 

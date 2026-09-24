@@ -58,13 +58,31 @@
 
 ## Parameters
 
-<!-- One table per customizer tab, in the same order as lib/params.scad. -->
+<!-- Generated from lib/params.scad by the MakerWorld build (PARAM_TABLES in
+     scripts/project_config.sh). Don't edit between the markers: change params.scad and rebuild. -->
+<!-- PARAMETERS:START -->
 
-### <TAB NAME>
+### DIMENSIONS
 
 | Parameter | Description | Default | Range |
 |---|---|---|---|
-| `<name>` | <what it does> | <default> | <min–max> |
+| `size_x` | REPLACE ME -- Overall length (X), in mm | 40 | 10–200, step 1 |
+| `size_y` | REPLACE ME -- Overall depth (Y), in mm | 30 | 10–200, step 1 |
+| `size_z` | REPLACE ME -- Overall height (Z), in mm | 10 | 2–100, step 0.5 |
+
+### OPTIONS
+
+| Parameter | Description | Default | Range |
+|---|---|---|---|
+| `rounded` | REPLACE ME -- Example checkbox: round the vertical edges | on | on/off |
+
+### CLEARANCES - TUNE FOR YOUR PRINTER
+
+| Parameter | Description | Default | Range |
+|---|---|---|---|
+| `fit_clearance` | Gap added to every mating cavity (mm). Nominal parts are never shrunk. | 0.15 | 0–0.6, step 0.05 |
+
+<!-- PARAMETERS:END -->
 
 ## Development
 

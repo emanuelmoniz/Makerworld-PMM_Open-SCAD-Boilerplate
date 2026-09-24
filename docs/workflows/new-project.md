@@ -45,7 +45,7 @@ python scripts/shared/pmm_inventory.py
 
 | File | Fill in |
 |---|---|
-| `README.md` | `BUNDLE-DESCRIPTION` paragraph (ships inside the bundle), features, parts, parameters |
+| `README.md` | `BUNDLE-DESCRIPTION` paragraph (ships inside the bundle), features, parts (the parameter table is generated) |
 | `AGENTS.md` → *Project overview* | what the model is, its parts, how they mate, mode switches |
 | `dist/makerworld_listing.md` | the customer-facing listing (can wait until the first release) |
 
@@ -58,7 +58,7 @@ python scripts/shared/pmm_inventory.py
    ([add-a-part.md](add-a-part.md)). Then delete the template part.
 4. `assembly/assembly_main.scad`: compose the parts, and write one `mw_plate_N()` per plate.
 5. `scripts/project_config.sh`: `SOURCE_FILES`, `DEV_VIEWS`, `BUNDLED_LIBRARIES` (remove unused),
-   `COLOR_PASSTHROUGH`.
+   `COLOR_PASSTHROUGH`, and `SMOKE_VARIANTS` (the extremes the smoke check should build).
 6. `scripts/plates_config.sh`: `PLATE_NAMES`, `PLATE_N_PARTS`, `PRINTER`.
 7. `scripts/render_config.sh`: `TARGETS`.
 
@@ -77,5 +77,7 @@ Add a `CHANGELOG.md` entry, then make the first commit.
 
 ## 8. Optional: CI
 
-`.github/workflows/check.yml` runs the build, verifies the committed bundle is up to date, and
-runs lint and smoke on every push. It works as-is on GitHub.
+`.github/workflows/check.yml` runs the freshness check (committed bundle and parameter tables match
+the sources), lint and smoke with every `SMOKE_VARIANTS` set on every push. It works as-is on
+GitHub. Locally, the pre-commit hook `init_project.py` enabled runs the freshness check before
+each commit.

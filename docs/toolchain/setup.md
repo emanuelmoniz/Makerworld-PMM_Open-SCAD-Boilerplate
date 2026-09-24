@@ -85,6 +85,16 @@ scripts\check.bat examples\demo
 Both should end successfully (`ALL CHECKS PASSED`). Then optionally `scripts\render.bat
 examples\demo` and `scripts\export_3mf.bat examples\demo`.
 
+## Git hooks (once per clone)
+
+```sh
+git config core.hooksPath .githooks
+```
+
+Enables `.githooks/pre-commit`, which refuses a commit whose MakerWorld bundle or generated
+parameter tables are stale (`scripts/check/fresh.sh`). `init_project.py` sets it for the clone
+it runs in; every other clone needs the command above.
+
 ## VS Code (optional)
 
 Open `project.code-workspace`. Useful extensions: *OpenSCAD* (syntax), *EditorConfig*,

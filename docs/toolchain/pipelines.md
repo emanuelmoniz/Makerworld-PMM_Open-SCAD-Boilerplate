@@ -35,7 +35,7 @@ flowchart LR
 
 | File | Read by | Holds |
 |---|---|---|
-| `scripts/project_config.sh` | builds, checks | identity, `SOURCE_FILES`, plate file, bundled libraries, color flattening, README markers, dev views |
+| `scripts/project_config.sh` | builds, checks | identity, `SOURCE_FILES`, plate file, bundled libraries, color flattening, README markers, dev views, generated parameter tables, smoke variants |
 | `scripts/plates_config.sh` | builds (validation, injected values), 3MF export | printer, `MW_PLATE_SIZE`, plates → parts, per-part Bambu overrides, assembly preview views |
 | `scripts/render_config.sh` | render | targets, perspectives, ratios, quality, parameter overrides |
 | `scripts/export_3mf_config.sh` | 3MF export | parameter overrides, quality, reference profile, global overrides, output |
@@ -47,7 +47,7 @@ to the project folder.
 
 ## MakerWorld bundle
 
-`scripts\build.bat` · `scripts/build/build.ps1 [-Project dir]` → `dist/<slug>_makerworld.scad`
+`scripts\build.bat` · `scripts/build/build.ps1 [-Project dir] [-OutFile path]` → `dist/<slug>_makerworld.scad`
 
 1. Regenerate `.build/plates.json` from `plates_config.sh`.
 2. **Validate**: every `mw_plate_N()` in `PLATE_ASSEMBLY_FILE` must call the same part modules, the
@@ -60,12 +60,21 @@ to the project folder.
    - drop local `include`/`use`; keep ones matching `BUNDLED_LIBRARIES`
    - drop `// BUILD:EXCLUDE-START … -END` blocks
    - drop comments, **except** in `params.scad` user-facing tabs (PMM help text) and same-line
-     widget annotations (`// [..]`, `// color`, `// font`)
+     widget annotations (`// [..]`, `// color`, `// font`); the `// @label:` / `// @note:` lines
+     are dropped too (they only feed the parameter tables)
    - rewrite `color(<var>)` to `MAKERWORLD_COLOR` unless `<var>` is in `COLOR_PASSTHROUGH`
 5. Inject `mw_plate_size = N;` and `mw_assembly_views = [...];` right after `params.scad`.
 6. Prepend the README `BUNDLE-DESCRIPTION` span as a header comment.
 7. Append `MAKERWORLD_TOP_LEVEL_CALL` if set (single-part models).
 8. Write UTF-8 without BOM.
+9. Regenerate the **parameter tables** of every `PARAM_TABLES` file from `params.scad`
+   (`scripts/shared/param_tables.py`), between `<!-- PARAMETERS:START -->` and
+   `<!-- PARAMETERS:END -->`. Style `readme`: one table per tab (variable, help text, default,
+   range). Style `listing`: one customer table (label, help text, compatibility), where the label
+   and compatibility come from optional `// @label:` / `// @note:` lines above the help line.
+
+`-OutFile` writes the bundle elsewhere and skips step 9, touching nothing tracked; the freshness
+check uses it.
 
 **Why `MW_PLATE_SIZE` is explicit by default:** a value derived from locally installed Bambu
 presets would make the tracked bundle differ between machines, and between your machine and CI.
@@ -84,15 +93,26 @@ plate from it.
 
 `scripts\check.bat` · `scripts/check/check.sh [-p dir]` runs:
 
+- **`fresh.sh`**: the tracked bundle and the generated parameter tables match the sources. It
+  builds the bundle into a temp file (`build.ps1 -OutFile`) and compares, then runs
+  `param_tables.py --check`, so it works regardless of git state. This catches the classic
+  mistake of changing `params.scad` after the last build. The **pre-commit hook**
+  (`.githooks/pre-commit`, enabled by `git config core.hooksPath .githooks`) runs it before every
+  commit.
 - **`pmm_lint.py`**: static rules P01–P12 on the shipped bundle
   ([compatibility-rules.md](../pmm/compatibility-rules.md)). Offline, using `docs/pmm/data/`.
 - **`smoke.sh`**: (1) every `parts/`/`assembly/` file in `SOURCE_FILES` exports to STL standalone;
   (2) every `mw_plate_N()` is built **from the shipped bundle** and its footprint is checked
   against `mw_plate_size`, and `mw_assembly_view()` must compile and be non-empty when views are
   configured (no size limit: it's a preview). Unresolved includes or modules count as failures.
+  (3) the same for every **`SMOKE_VARIANTS`** entry (`project_config.sh`), a named set of
+  parameter overrides (`"name|a=1; b=\"x\""`, one `-D` per assignment): extreme sizes, every
+  dropdown option, optional features on and off. There an empty plate or preview is reported,
+  not failed, since a variant may switch a part off.
 
-Run after every build, before releases, and in CI. `.github/workflows/check.yml` runs the builds,
-a stale-bundle check and these checks for the root project and `examples/demo` on every push,
+Run after every build, before releases, and in CI. `.github/workflows/check.yml` builds the dev
+bundle and runs these checks (without running the MakerWorld build first, which would hide a
+stale commit) for the root project and `examples/demo` on every push,
 pull request and published release, using **OpenSCAD Nightly** (`openscad-nightly` from the
 official OBS apt repo), the same kind of build PMM uses.
 
@@ -115,6 +135,11 @@ ratios. **Agents never render unless asked** (AGENTS.md).
    ([multicolor](../workflows/multicolor.md)). Optionally auto-orient one part
    (`|auto_orient=1`) or the whole plate. Arrange with Bambu Studio's CLI `--arrange=1` inside the
    real bed, passing `--enable-support` because it changes arrange spacing.
+   **Optional parts:** a part that renders nothing with this run's parameters (OpenSCAD reports
+   "top level object is empty") is skipped, and a plate left with no parts is dropped: later
+   plates move up and the project has no empty plate. For this, an optional part's main module
+   must draw nothing when it is switched off, so its standalone `BUILD:EXCLUDE` preview is empty.
+   Per-part `--object-set` overrides follow the output plate numbering.
 3. If `ASSEMBLY_PLATE_VIEWS` is set, add the **assembly preview** as the last plate
    (`ASSEMBLY_PLATE_NAME`, default `_preview assembly DO NOT PRINT`), so plates 1..N still match
    `mw_plate_1()`..`mw_plate_N()`. It's rendered as one object from the freshly rebuilt dev bundle

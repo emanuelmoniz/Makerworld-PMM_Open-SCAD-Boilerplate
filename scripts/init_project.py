@@ -8,6 +8,8 @@
 #   - sets PROJECT_SLUG in scripts/project_config.sh and the 3MF output name
 #   - removes the TEMPLATE banner from README.md
 #   - optionally deletes examples/ (--drop-examples)
+#   - enables the repo's git hooks (git config core.hooksPath .githooks):
+#     the pre-commit hook refuses a commit with a stale bundle
 # Then it lists the MANUAL placeholders still left (README sections, the
 # AGENTS.md project overview, REPLACE ME markers in the .scad stubs).
 #
@@ -26,6 +28,7 @@ import datetime
 import pathlib
 import re
 import shutil
+import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -152,6 +155,14 @@ def main():
         print(f"{'would delete' if args.dry_run else 'deleted'}  examples/")
         if not args.dry_run:
             shutil.rmtree(ROOT / "examples")
+
+    # The pre-commit hook (.githooks/pre-commit) refuses commits with a stale
+    # bundle or parameter table. Hooks are per clone, so this is also in
+    # docs/toolchain/setup.md for later clones.
+    if (ROOT / ".git").exists() and (ROOT / ".githooks").is_dir():
+        print(f"{'would enable' if args.dry_run else 'enabled'}  git hooks (core.hooksPath = .githooks)")
+        if not args.dry_run:
+            subprocess.run(["git", "-C", str(ROOT), "config", "core.hooksPath", ".githooks"], check=False)
 
     print(f"{changed} file(s) {'would change' if args.dry_run else 'changed'}.")
     print("\nStill to fill in by hand:")

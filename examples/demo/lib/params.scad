@@ -16,15 +16,20 @@
 
 /* [BOX] */
 
+// @label: Inside length
 // Inside length (X), in mm
 inner_length = 80; // [30:1:200]
 
+// @label: Inside width
 // Inside width (Y), in mm
 inner_width = 50; // [20:1:150]
 
+// @label: Inside height
 // Inside height (Z), in mm
 inner_height = 30; // [10:1:100]
 
+// @label: Wall thickness
+// @note: Thicker walls also make deeper lid grooves
 // Wall thickness, in mm
 wall = 2.4; // [1.6:0.2:5]
 
@@ -36,20 +41,26 @@ floor_thickness = 2; // [1.2:0.2:5]
 // Label style (None to disable)
 label_style = "engraved"; // [none:None, engraved:Engraved (cut in), embossed:Embossed (raised)]
 
+// @note: Only when Label style is not None
 // Label text
 label_text = "BOX";
 
+// @note: Only when Label style is not None
 // Label size, in mm
 label_size = 10; // [4:1:30]
 
+// @note: Only when Label style is not None
 // Label font
 label_font = "Liberation Sans:style=Bold"; // font
 
+// @label: Embossed label color
+// @note: Only when Label style is Embossed
 // Embossed label color (multi-color printing)
 label_color = "#E67E22"; // color
 
 /* [CLEARANCES - TUNE FOR YOUR PRINTER] */
 
+// @label: Lid fit
 // Lid fit: gap added to the groove the lid slides in (mm)
 lid_clearance = 0.2; // [0:0.05:0.6]
 

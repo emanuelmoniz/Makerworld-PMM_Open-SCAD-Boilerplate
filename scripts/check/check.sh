@@ -1,9 +1,12 @@
 #!/bin/bash
 # ============================================================
-# <PROJECT NAME>  |  Run every check (lint + smoke)
+# <PROJECT NAME>  |  Run every check (freshness + lint + smoke)
 # ------------------------------------------------------------
-# 1. pmm_lint.py  -- static PMM-compatibility rules on the shipped bundle
-# 2. smoke.sh     -- every source file and every plate actually compiles
+# 1. fresh.sh     -- the tracked bundle and the generated parameter tables
+#                    match the sources (catches a forgotten rebuild)
+# 2. pmm_lint.py  -- static PMM-compatibility rules on the shipped bundle
+# 3. smoke.sh     -- every source file and every plate actually compiles,
+#                    with the defaults and with every SMOKE_VARIANTS set
 # Run it after building, before committing a release, and in CI.
 #
 # Usage: scripts/check/check.sh [-p project_dir]
@@ -18,6 +21,8 @@ PROJECT_ARGS=()
 [ "${1:-}" = "-p" ] && PROJECT_ARGS=(-p "$2")
 
 status=0
+echo "==================== Freshness ==================="
+bash "$SCRIPTS_DIR/check/fresh.sh" "${PROJECT_ARGS[@]}" || status=1
 echo "==================== PMM lint ===================="
 "$PYTHON" "$SCRIPTS_DIR/check/pmm_lint.py" "${PROJECT_ARGS[@]}" || status=1
 echo "==================== Smoke ======================="

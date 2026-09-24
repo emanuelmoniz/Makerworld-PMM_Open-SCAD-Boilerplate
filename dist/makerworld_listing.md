@@ -34,10 +34,20 @@
 
 Every parameter in the customizer, grouped by tab.
 
+<!-- PARAMETERS:START -->
+
 | Parameter | Description | Compatibility |
 |---|---|---|
-| **<TAB NAME>** | | |
-| <Label as shown in the customizer> | <what it does> | <"Only has an effect when X is on", or blank> |
+| **DIMENSIONS** | | |
+| Size x | REPLACE ME -- Overall length (X), in mm |  |
+| Size y | REPLACE ME -- Overall depth (Y), in mm |  |
+| Size z | REPLACE ME -- Overall height (Z), in mm |  |
+| **OPTIONS** | | |
+| Rounded | REPLACE ME -- Example checkbox: round the vertical edges |  |
+| **CLEARANCES - TUNE FOR YOUR PRINTER** | | |
+| Fit clearance | Gap added to every mating cavity (mm). Nominal parts are never shrunk. |  |
+
+<!-- PARAMETERS:END -->
 
 ## Ready to print
 

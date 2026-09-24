@@ -14,7 +14,11 @@
 #      `multicolor=1`, to a Bambu multi-part object with one filament per
 #      color region (multicolor_3mf.py); optionally auto-orient a single part
 #      or the whole plate; arrange the plate with Bambu Studio's own
-#      `--arrange=1` inside the real bed
+#      `--arrange=1` inside the real bed. A part that renders nothing with
+#      this run's parameters (an optional part switched off, by its own
+#      parameter or by PARAM_OVERRIDES) is skipped, and a plate left with no
+#      parts is dropped altogether: later plates move up, so the project never
+#      has an empty plate
 #   4. if ASSEMBLY_PLATE_VIEWS is set (plates_config.sh section 3): add the
 #      assembly preview as the LAST plate -- MakerWorld's mw_assembly_view()
 #      layout rendered from the dev bundle, centered on the bed, NEVER arranged
@@ -110,6 +114,22 @@ trap 'rm -rf "$WORKDIR"' EXIT
 BED_EXCLUDE_ARGS=()
 [ -n "$BED_EXCLUDE_AREA" ] && BED_EXCLUDE_ARGS=(--bed-exclude-area="$BED_EXCLUDE_AREA")
 
+# Exports part file $1 to $2 with OpenSCAD, extra flags in $3.. .
+# Returns 0 on success and 2 when the part renders nothing (switched off with
+# this run's parameters); exits the script on any other failure.
+openscad_export_part() {
+    local src="$1" out="$2"; shift 2
+    local log
+    if log="$("$OPENSCAD" "${QUALITY_ARGS[@]}" "${PARAM_ARGS[@]}" "$@" -o "$out" "$src" 2>&1)"; then
+        return 0
+    fi
+    if grep -qi "top level object is empty" <<< "$log"; then
+        return 2
+    fi
+    echo "  OpenSCAD failed to export $src" >&2
+    exit 1
+}
+
 # One Bambu Studio CLI call turning a plate's part files into a single-plate
 # 3mf (plate.3mf in that plate's dir) -- shared by the regular plates and the
 # assembly preview plate. Part files are .stl, or .3mf for a multicolor part
@@ -141,6 +161,7 @@ bambu_export_plate() {
 
 PLATE_COUNT="${#PLATE_NAMES[@]}"
 ASSEMBLE_ARGS=()
+OUT_PLATE=0    # plate number in the output project; dropped plates don't count
 
 for (( p=1; p<=PLATE_COUNT; p++ )); do
     plate_name="${PLATE_NAMES[$((p-1))]}"
@@ -180,14 +201,16 @@ for (( p=1; p<=PLATE_COUNT; p++ )); do
             # colors baked into the mesh cannot give (see its header).
             # PARAM_OVERRIDES reach this the same as any other part: the
             # part file is still OpenSCAD's main file.
-            echo "  $src -> ${name}.3mf (multicolor)"
-            if ! "$OPENSCAD" "${QUALITY_ARGS[@]}" "${PARAM_ARGS[@]}" \
-                    --enable=lazy-union \
-                    -O export-3mf/color-mode=model \
-                    -O export-3mf/material-type=color \
-                    -o "$plate_dir/${name}_regions.3mf" "$src" > /dev/null 2>&1; then
-                echo "  OpenSCAD failed to export $src" >&2; exit 1
+            rc=0
+            openscad_export_part "$src" "$plate_dir/${name}_regions.3mf" \
+                --enable=lazy-union \
+                -O export-3mf/color-mode=model \
+                -O export-3mf/material-type=color || rc=$?
+            if [ "$rc" = 2 ]; then
+                echo "  $src renders nothing with these parameters -- skipped"
+                continue
             fi
+            echo "  $src -> ${name}.3mf (multicolor)"
             if ! "$PYTHON" "$SCRIPTS_DIR/export/multicolor_3mf.py" \
                     "$plate_dir/${name}_regions.3mf" "$plate_dir/${name}.3mf" \
                     --reference "$REFERENCE_3MF" --name "${name}.3mf" \
@@ -197,11 +220,13 @@ for (( p=1; p<=PLATE_COUNT; p++ )); do
             PART_FILES+=("${name}.3mf")
             part_file="${name}.3mf"
         else
-            echo "  $src -> ${name}.stl"
-            if ! "$OPENSCAD" "${QUALITY_ARGS[@]}" "${PARAM_ARGS[@]}" \
-                    -o "$plate_dir/${name}.stl" "$src" > /dev/null 2>&1; then
-                echo "  OpenSCAD failed to export $src" >&2; exit 1
+            rc=0
+            openscad_export_part "$src" "$plate_dir/${name}.stl" || rc=$?
+            if [ "$rc" = 2 ]; then
+                echo "  $src renders nothing with these parameters -- skipped"
+                continue
             fi
+            echo "  $src -> ${name}.stl"
             PART_FILES+=("${name}.stl")
             part_file="${name}.stl"
         fi
@@ -236,15 +261,20 @@ for (( p=1; p<=PLATE_COUNT; p++ )); do
                     echo "  warning: auto-orient produced nothing; keeping authored orientation" >&2
                 fi
             else
-                OBJECT_SET_ARGS+=(--object-set "$p" "$part_file" "$kv")
+                OBJECT_SET_ARGS+=(--object-set "$((OUT_PLATE + 1))" "$part_file" "$kv")
                 [ "$kv" = "enable_support=1" ] && plate_enable_support="1"
             fi
         done
     done
 
+    if [ "${#PART_FILES[@]}" -eq 0 ]; then
+        echo "  no parts left -- plate dropped"
+        continue
+    fi
     echo "  bambu-studio: arrange=$plate_arrange orient=$plate_auto_orient support=$plate_enable_support"
     bambu_export_plate "$plate_dir" "$plate_enable_support" "$plate_auto_orient" "$plate_arrange" "${PART_FILES[@]}"
     ASSEMBLE_ARGS+=(--plate "$plate_name" "$plate_dir/plate.3mf")
+    OUT_PLATE=$((OUT_PLATE + 1))
 done
 
 # ---- Assembly preview plate (plates_config.sh section 3) ------------------

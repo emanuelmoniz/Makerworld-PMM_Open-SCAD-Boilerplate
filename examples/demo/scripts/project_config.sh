@@ -104,3 +104,32 @@ DEV_VIEWS=(
     "mw_plate_1:Plate 1 - box"
     "mw_plate_2:Plate 2 - lid"
 )
+
+# ---- 8. GENERATED PARAMETER TABLES ----------------------------------------
+# "file|style" entries: files whose parameter table is generated from
+# PARAMS_FILE by the MakerWorld build (scripts/shared/param_tables.py),
+# between the lines <!-- PARAMETERS:START --> and <!-- PARAMETERS:END -->.
+# The freshness check fails when a table no longer matches params.scad.
+#   readme   one table per tab: variable | description | default | range
+#   listing  customer table: label | description | compatibility
+# Labels and the compatibility column come from optional `// @label:` and
+# `// @note:` lines above a parameter's help line (docs/workflows/
+# add-a-parameter.md). Remove an entry to maintain that table by hand.
+PARAM_TABLES=(
+    "README.md|readme"
+    "dist/makerworld_listing.md|listing"
+)
+
+# ---- 9. SMOKE VARIANTS ----------------------------------------------------
+# Extra parameter sets the smoke check builds every plate (and the assembly
+# preview) with, on top of the defaults: "name|param=value; param=value".
+# Each assignment is one -D, so values may contain spaces; strings keep
+# their escaped quotes. Cover the extremes: min and max sizes, every
+# dropdown option, every optional feature on and off. Every variant costs a
+# full render of every plate, locally and in CI.
+SMOKE_VARIANTS=(
+    "smallest box|inner_length=30; inner_width=20; inner_height=10; wall=1.6; floor_thickness=1.2"
+    "largest box|inner_length=200; inner_width=150; inner_height=100; wall=5; floor_thickness=5"
+    "no label|label_style=\"none\""
+    "embossed label|label_style=\"embossed\"; label_text=\"SPICES & HERBS\"; label_size=30"
+)

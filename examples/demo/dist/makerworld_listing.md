@@ -25,19 +25,26 @@ whatever you want to store, and add a name to the lid.
 
 ## Complete options available
 
+<!-- PARAMETERS:START -->
+
 | Parameter | Description | Compatibility |
 |---|---|---|
 | **BOX** | | |
-| Inside length / width / height | Usable inner space, in mm | |
-| Wall thickness | Thickness of the side walls | Thicker walls also make deeper lid grooves |
-| Floor thickness | Thickness of the floor | |
+| Inside length | Inside length (X), in mm |  |
+| Inside width | Inside width (Y), in mm |  |
+| Inside height | Inside height (Z), in mm |  |
+| Wall thickness | Wall thickness, in mm | Thicker walls also make deeper lid grooves |
+| Floor thickness | Floor thickness, in mm |  |
 | **LID LABEL** | | |
-| Label style | None, engraved or embossed | |
-| Label text / size | The text and its height in mm | Only when Label style is not None |
-| Label font | Font of the label | Only when Label style is not None |
-| Embossed label color | Color of raised letters | Only when Label style is Embossed |
-| **CLEARANCES** | | |
-| Lid fit | Gap between the lid and its grooves | |
+| Label style | Label style (None to disable) |  |
+| Label text | Label text | Only when Label style is not None |
+| Label size | Label size, in mm | Only when Label style is not None |
+| Label font | Label font | Only when Label style is not None |
+| Embossed label color | Embossed label color (multi-color printing) | Only when Label style is Embossed |
+| **CLEARANCES - TUNE FOR YOUR PRINTER** | | |
+| Lid fit | Lid fit: gap added to the groove the lid slides in (mm) |  |
+
+<!-- PARAMETERS:END -->
 
 ## Changelog
 

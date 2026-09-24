@@ -15,7 +15,8 @@
    `## [Unreleased]`, and update the compare links at the bottom.
 5. **`dist/makerworld_listing.md`:** add a `### x.y.z` entry to its changelog with the
    **customer-facing** subset only. Say which parts to reprint if a fix changes one.
-6. **README:** confirm the features, parts and parameter tables match the release.
+6. **README:** confirm the features and parts match the release (the parameter tables are
+   generated, and the freshness check confirms they match).
 7. **Assets (only if geometry changed and the user asked):** re-render images
    (`scripts\render.bat`), re-export default STLs into `stl/`, regenerate or re-save curated
    `printables/`. Delete stale ones.

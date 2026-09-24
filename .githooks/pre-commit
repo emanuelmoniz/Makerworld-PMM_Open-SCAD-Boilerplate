@@ -1,0 +1,26 @@
+#!/bin/bash
+# ============================================================
+# <PROJECT NAME>  |  Git pre-commit hook: no stale generated files
+# ------------------------------------------------------------
+# Runs scripts/check/fresh.sh for the project (and examples/demo while it
+# exists): the tracked MakerWorld bundle and the generated parameter tables
+# must match the sources, or the commit is refused. CI fails on the same
+# thing, but only after the push.
+#
+# Enable once per clone (init_project.py does it for you):
+#     git config core.hooksPath .githooks
+# Skip once, knowingly:  git commit --no-verify
+# It checks the working tree, not only what is staged: build, then stage
+# dist/ and the README / listing along with the source change.
+# ============================================================
+ROOT="$(git rev-parse --show-toplevel)"
+status=0
+for project in "." "examples/demo"; do
+    [ -f "$ROOT/$project/scripts/project_config.sh" ] || continue
+    echo "pre-commit: freshness check ($project)"
+    bash "$ROOT/scripts/check/fresh.sh" -p "$project" || status=1
+done
+if [ $status -ne 0 ]; then
+    echo "pre-commit: generated files are stale -- run the MakerWorld build, stage the result, commit again." >&2
+fi
+exit $status

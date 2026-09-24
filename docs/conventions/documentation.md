@@ -5,8 +5,8 @@
 
 | File | Audience | Job | Coupled to |
 |---|---|---|---|
-| `README.md` | developers, GitHub visitors | what the model is, parts, assembly, parameters, how to build | **build**: the `BUNDLE-DESCRIPTION` span is copied into the bundle header |
-| `dist/makerworld_listing.md` | MakerWorld customers | the listing description, pasted into MakerWorld | nothing (hand-maintained) |
+| `README.md` | developers, GitHub visitors | what the model is, parts, assembly, parameters, how to build | **build**: the `BUNDLE-DESCRIPTION` span is copied into the bundle header; the parameter table is generated from `params.scad` |
+| `dist/makerworld_listing.md` | MakerWorld customers | the listing description, pasted into MakerWorld | **build**: the *Complete options* table is generated from `params.scad`; the rest is hand-maintained |
 | `CHANGELOG.md` | maintainers | complete change history | release process |
 | `AGENTS.md` | AI agents and humans | rules, commands, standing directives | — |
 | `CLAUDE.md` | Claude Code | imports `AGENTS.md` | — |

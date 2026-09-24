@@ -25,14 +25,21 @@
 #     params.scad (values from scripts/plates_config.sh)
 #   - the README description span is copied into the header comment
 #   - MAKERWORLD_TOP_LEVEL_CALL (if set) is appended as the last line
+# Then the parameter tables of the files in PARAM_TABLES are regenerated
+# from params.scad (scripts/shared/param_tables.py).
+#
+# -OutFile writes the bundle somewhere else and touches nothing in the
+# project that is tracked (no parameter tables either): scripts/check/fresh.sh
+# uses it to compare a fresh build with the tracked bundle.
 #
 # Usage:
 #   scripts\build.bat                                   (double-click)
 #   powershell -File scripts/build/build.ps1
 #   powershell -File scripts/build/build.ps1 -Project examples/demo
+#   powershell -File scripts/build/build.ps1 -OutFile <path>
 # See: docs/toolchain/pipelines.md ("MakerWorld bundle")
 # ============================================================
-param([string]$Project = "")
+param([string]$Project = "", [string]$OutFile = "")
 
 $ErrorActionPreference = "Stop"
 Import-Module (Join-Path $PSScriptRoot "Bundle.psm1") -Force
@@ -89,5 +96,14 @@ if ($ctx.TopLevelCall -ne "") {
     $bundle.Add($ctx.TopLevelCall)
 }
 
+if ($OutFile -ne "") {
+    Write-Utf8NoBom -Path $OutFile -Lines $bundle
+    Write-Host "MakerWorld bundle written: $OutFile"
+    exit 0
+}
+
 Write-Utf8NoBom -Path $ctx.MakerWorldOut -Lines $bundle
 Write-Host "MakerWorld bundle written: $($ctx.MakerWorldOut)"
+
+$tables = Invoke-SharedPython -Script "param_tables.py" -Arguments @($ctx.Dir)
+foreach ($l in @($tables)) { if ($l) { Write-Host $l } }

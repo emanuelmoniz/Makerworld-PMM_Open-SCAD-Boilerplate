@@ -6,7 +6,13 @@ All notable changes to the Sliding-Lid Box demo. Format based on
 
 ## [Unreleased]
 
+### Fixed
+- The embossed label is clipped to the lid: a long or large label overhung it and made plate 2
+  too big for MakerWorld. Reprint the lid if yours has an overhanging label.
+
 ### Added
+- Four `SMOKE_VARIANTS` (smallest and largest box, no label, long embossed label), and generated
+  parameter tables in the README and listing (`@label` / `@note` lines in `params.scad`).
 - The lid is now a **multicolor part** for the local Bambu 3MF export: `sliding_lid_body()` and
   `sliding_lid_label()` are separate color regions, exported as one object with the label on
   filament 2 (`multicolor=1` + `FILAMENT_MAP`, see

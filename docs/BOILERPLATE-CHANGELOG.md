@@ -7,6 +7,42 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), [SemVer](https
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-24
+
+Lessons from the first project built on the template (a parametric funnel with optional parts,
+a two-color label and a hanging arc).
+
+### Added
+- **Generated parameter tables.** `scripts/shared/param_tables.py` writes the README and listing
+  parameter tables from `params.scad` between `<!-- PARAMETERS:START/END -->` markers, so they
+  can't drift from the code (hand-kept tables went stale in practice). Configured by
+  `PARAM_TABLES` in `project_config.sh` (styles `readme` / `listing`). Optional `// @label:` and
+  `// @note:` lines above a parameter's help line feed the customer table; the MakerWorld build
+  strips them. The build regenerates the tables after writing the bundle.
+- **Freshness check** `scripts/check/fresh.sh`, first stage of `check.sh`: builds the bundle into
+  a temp file (new `build.ps1 -OutFile`) and compares it with the tracked one, then checks the
+  parameter tables. Catches a `params.scad` change committed without a rebuild (which failed CI
+  in that project) regardless of git state.
+- **Pre-commit hook** `.githooks/pre-commit` running the freshness check for the root project and
+  the demo; `init_project.py` enables it (`git config core.hooksPath .githooks`).
+- **Smoke variants.** `SMOKE_VARIANTS` in `project_config.sh`: named parameter-override sets
+  (`"name|a=1; b=\"x\""`) for which the smoke check builds every plate and the assembly
+  preview again, with the same plate-size check (new stage 3). The demo ships four.
+
+### Changed
+- Bambu 3MF export: a part that renders nothing with the run's parameters is skipped, and a plate
+  left with no parts is dropped (was: the export aborted). Per-part `--object-set` overrides
+  follow the output plate numbering. New standing rule in `AGENTS.md`: an optional part's main
+  module draws nothing when switched off.
+- CI no longer runs the MakerWorld build before checking (it would rewrite a stale bundle and
+  tables and hide them); `check.sh`'s freshness stage compares against a temp build instead.
+- `smoke.sh`: plate / preview checks moved into `check_outputs()`, shared by stages 2 and 3;
+  `export_stl` passes extra OpenSCAD arguments.
+
+### Fixed
+- Demo: an embossed label is clipped to the lid. A long or large one overhung it (plate 2 grew
+  to 349 mm with "SPICES & HERBS" at size 30); found by the new smoke variants.
+
 ## [1.0.0] - 2026-09-23
 
 ### Added
@@ -49,5 +85,6 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), [SemVer](https
   root project and `examples/demo` on every push, pull request and published release, using
   **OpenSCAD Nightly** (`openscad-nightly` from the official OBS apt repo).
 
-[Unreleased]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/releases/tag/v1.0.0

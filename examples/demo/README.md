@@ -53,14 +53,36 @@ Or open any file under `parts/` or `assembly/` directly in OpenSCAD.
 
 ## Parameters
 
-| Tab | Parameter | Default | Range |
+<!-- Generated from lib/params.scad by the MakerWorld build. -->
+<!-- PARAMETERS:START -->
+
+### BOX
+
+| Parameter | Description | Default | Range |
 |---|---|---|---|
-| BOX | `inner_length` / `inner_width` / `inner_height` | 80 / 50 / 30 | 30–200 / 20–150 / 10–100 |
-| BOX | `wall` / `floor_thickness` | 2.4 / 2 | 1.6–5 / 1.2–5 |
-| LID LABEL | `label_style` | engraved | none, engraved, embossed |
-| LID LABEL | `label_text` / `label_size` | BOX / 10 | — / 4–30 |
-| LID LABEL | `label_font` / `label_color` | Liberation Sans Bold / `#E67E22` | font picker / color picker |
-| CLEARANCES | `lid_clearance` | 0.2 | 0–0.6 |
+| `inner_length` | Inside length (X), in mm | 80 | 30–200, step 1 |
+| `inner_width` | Inside width (Y), in mm | 50 | 20–150, step 1 |
+| `inner_height` | Inside height (Z), in mm | 30 | 10–100, step 1 |
+| `wall` | Wall thickness, in mm | 2.4 | 1.6–5, step 0.2 |
+| `floor_thickness` | Floor thickness, in mm | 2 | 1.2–5, step 0.2 |
+
+### LID LABEL
+
+| Parameter | Description | Default | Range |
+|---|---|---|---|
+| `label_style` | Label style (None to disable) | engraved | none, engraved, embossed |
+| `label_text` | Label text | BOX | text |
+| `label_size` | Label size, in mm | 10 | 4–30, step 1 |
+| `label_font` | Label font | Liberation Sans:style=Bold | font picker |
+| `label_color` | Embossed label color (multi-color printing) | #E67E22 | color picker |
+
+### CLEARANCES - TUNE FOR YOUR PRINTER
+
+| Parameter | Description | Default | Range |
+|---|---|---|---|
+| `lid_clearance` | Lid fit: gap added to the groove the lid slides in (mm) | 0.2 | 0–0.6, step 0.05 |
+
+<!-- PARAMETERS:END -->
 
 ## Changelog
 

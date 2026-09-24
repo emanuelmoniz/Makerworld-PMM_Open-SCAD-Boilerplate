@@ -17,6 +17,14 @@
 //                              INSTALLED inventory (docs/pmm/data/)
 //   /* [Hidden] */             everything below is invisible in the UI
 //
+// GENERATED TABLES: the README and listing parameter tables are built from
+// this file (PARAM_TABLES, scripts/project_config.sh). Two optional lines
+// ABOVE a parameter's help line feed the customer table only -- the
+// customizer reads just the line directly above, and the MakerWorld build
+// strips these:
+//   // @label: Length            label in the listing (default: the name)
+//   // @note: Only with X on     the listing's Compatibility column
+//
 // BUILD COUPLING (scripts/build/Bundle.psm1): in the MakerWorld bundle,
 // comments in every tab EXCEPT [Hidden] are kept verbatim (they are the
 // UI help text); comments under [Hidden] are stripped. Write user-facing

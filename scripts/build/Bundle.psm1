@@ -270,7 +270,8 @@ function Test-BundledInclude {
 }
 
 # Mode "makerworld": strip comments (except params.scad user-facing help
-#   text and same-line widget syntax), flatten color() calls, drop blanks.
+#   text and same-line widget syntax -- minus the @label / @note lines,
+#   which feed the parameter tables), flatten color() calls, drop blanks.
 # Mode "dev": keep comments and colors; drop params.scad's own $fa/$fs so
 #   the dev bundle's quality override does not re-assign them.
 # Both modes: drop BUILD:EXCLUDE blocks and every local include/use; keep
@@ -307,6 +308,9 @@ function Select-BundleLines {
             $result.Add($line)
             continue
         }
+        # @label / @note lines are for the generated parameter tables
+        # (scripts/shared/param_tables.py), not for the PMM UI.
+        if ($IsParams -and $keepComments -and $line -match '^\s*//\s*@(label|note)\s*:') { continue }
         if ($IsParams -and $keepComments) { $result.Add($line); continue }
 
         if ($line -match '^\s*//') { continue }          # full-line comment
@@ -356,4 +360,4 @@ function Write-Utf8NoBom {
 Export-ModuleMember -Function Get-ProjectContext, Update-PlatesJson, Assert-PlateModulesMatch,
     Assert-AssemblyViewsExist, Get-BundleInjectedLines, Get-AssemblyViews,
     Get-MwPlateSize, Select-BundleLines, Get-ReadmeDescription, Write-Utf8NoBom, Read-BashConfig,
-    Get-PythonCommand
+    Get-PythonCommand, Invoke-SharedPython

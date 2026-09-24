@@ -136,8 +136,12 @@ module sliding_lid_label() {
     label_center = sliding_lid_label_center();
     if (label_style == "embossed")
         color(label_color)
-            translate([label_center[0], label_center[1], lid_thickness - 0.01])
-                label_solid(label_text, label_size, label_font, label_depth + 0.01);
+            intersection() {
+                translate([label_center[0], label_center[1], lid_thickness - 0.01])
+                    label_solid(label_text, label_size, label_font, label_depth + 0.01);
+                translate([0, 0, lid_thickness - 0.02])
+                    cube([lid_length, lid_width, label_depth + 0.04]);
+            }
 }
 module sliding_lid() {
     sliding_lid_body();
