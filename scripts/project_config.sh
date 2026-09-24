@@ -134,3 +134,15 @@ SMOKE_VARIANTS=(
     # "largest|size_x=200; size_y=200; size_z=100"
     # "square edges|rounded=false"
 )
+
+# ---- 10. CLEARANCE CHECKS -------------------------------------------------
+# "name|expression A|expression B|empty or solid": the smoke check
+# intersects A and B (evaluated in the shipped bundle, so every module and
+# variable is available) with the defaults and with every SMOKE_VARIANTS
+# set, and expects the result to be empty (they never touch) or solid (they
+# must touch). Use it for what a size check can't see: a moving part clears
+# the body, a lid slides in with its clearance, a latch or lip holds.
+# Place parts in their assembled pose, as the assembled views do.
+CLEARANCE_CHECKS=(
+    # "lid clears the body|body();|translate([0, 0, lid_z]) lid();|empty"
+)

@@ -21,6 +21,7 @@ Agents: start with AGENTS.md (rules and commands), then docs/INDEX.md (doc map a
 ## OpenSCAD and conventions
 - [docs/openscad/customizer-syntax.md](docs/openscad/customizer-syntax.md): parameter annotation syntax
 - [docs/openscad/libraries-and-fonts.md](docs/openscad/libraries-and-fonts.md): BOSL2, name collisions, fonts
+- [docs/openscad/text-on-curved-surfaces.md](docs/openscad/text-on-curved-surfaces.md): text wrapped around round parts
 - [docs/conventions/geometry.md](docs/conventions/geometry.md): origin, clearances, manifold safety
 - [docs/conventions/source-architecture.md](docs/conventions/source-architecture.md): include vs use, params, bundle order
 - [docs/conventions/naming.md](docs/conventions/naming.md): files, modules, parameters

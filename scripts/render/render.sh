@@ -13,6 +13,9 @@
 # circumscribing its bounding box, and places an explicit --camera that
 # fits that sphere at RENDER_FOV (plus RENDER_MARGIN). A sphere looks the
 # same from every angle, so no perspective can crop.
+# RENDER_FIT="tight" fits each perspective to the model's actual outline
+# instead (scripts/shared/render_fit.py): the model fills the frame up to
+# RENDER_MARGIN, which suits tall or long models the sphere leaves small.
 #
 # MANUAL ONLY -- nothing else calls this script (AGENTS.md: never render
 # unless asked in that turn).
@@ -69,6 +72,8 @@ RENDER_FOV="${RENDER_FOV:-22.5}"
 RENDER_MARGIN="${RENDER_MARGIN:-0.1}"
 RENDER_WIDTH="${RENDER_WIDTH:-1600}"
 RENDER_COLORSCHEME="${RENDER_COLORSCHEME:-Tomorrow}"
+RENDER_FIT="${RENDER_FIT:-sphere}"
+case "$RENDER_FIT" in sphere|tight) ;; *) echo "RENDER_FIT must be sphere or tight, not: $RENDER_FIT" >&2; exit 1 ;; esac
 
 # $vpf is passed explicitly so OpenSCAD's FOV and the distance formula
 # below can never disagree.
@@ -139,10 +144,17 @@ for src in "${TARGETS[@]}"; do
                 continue
             fi
             out="$out_dir/${base}_${perspective}_${ratio}.png"
+            tx="$cx"; ty="$cy"; tz="$cz"; dist="$distance"
+            if [ "$RENDER_FIT" = "tight" ]; then
+                aspect="$(awk -v w="$RENDER_WIDTH" -v h="$height" 'BEGIN { printf "%.6f", w / h }')"
+                read -r tx ty tz dist < <("$PYTHON" "$SCRIPTS_DIR/shared/render_fit.py" "$stl_tmp" \
+                    55 0 "$az" "$RENDER_FOV" "$aspect" "$RENDER_MARGIN" | tr -d '\r') || true
+                [ -n "$dist" ] || { tx="$cx"; ty="$cy"; tz="$cz"; dist="$distance"; }
+            fi
             echo "[$i/$total] $src ($perspective, $ratio, ${RENDER_WIDTH}x${height}) -> $out"
             "$OPENSCAD" --render --projection=ortho \
                 --imgsize="${RENDER_WIDTH},${height}" \
-                --camera="${cx},${cy},${cz},55,0,${az},${distance}" \
+                --camera="${tx},${ty},${tz},55,0,${az},${dist}" \
                 --colorscheme="$RENDER_COLORSCHEME" \
                 "${QUALITY_ARGS[@]}" "${PARAM_ARGS[@]}" \
                 -o "$out" "$src" > /dev/null 2>&1

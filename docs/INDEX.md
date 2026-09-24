@@ -26,6 +26,7 @@
 |---|---|---|
 | [openscad/customizer-syntax.md](openscad/customizer-syntax.md) | Tabs, sliders, dropdowns, color and font pickers | adding or changing a parameter |
 | [openscad/libraries-and-fonts.md](openscad/libraries-and-fonts.md) | BOSL2 install and pinning, name collisions, local fonts | using a library or text |
+| [openscad/text-on-curved-surfaces.md](openscad/text-on-curved-surfaces.md) | Labels wrapped around round parts: `cylinder_wrap_text()`, engraved / embossed / inlay | putting text on a cylinder |
 
 ## Conventions
 

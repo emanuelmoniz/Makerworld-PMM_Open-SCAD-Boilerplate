@@ -7,6 +7,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), [SemVer](https
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-24
+
+### Added
+- **Tight render framing.** `RENDER_FIT="tight"` (`render_config.sh`, the new template default)
+  fits each perspective and ratio to the model's actual outline with the new
+  `scripts/shared/render_fit.py`, centered, filling the frame to `1 / (1 + RENDER_MARGIN)`. On the
+  demo every view now fills 91% of its limiting side (the sphere fit, still available as
+  `RENDER_FIT="sphere"`, gave 58–84%). The view-space convention of OpenSCAD's `--camera` was
+  established by rendering, not assumed: top view at `[0,0,0]`, scene turned by the inverse
+  rotation.
+- **Clearance checks.** `CLEARANCE_CHECKS` in `project_config.sh`: `"name|A|B|empty or solid"`,
+  intersected in the shipped bundle with the defaults and every `SMOKE_VARIANTS` set, so a
+  collision (or a latch that no longer holds) fails the smoke check. The demo proves its lid fit
+  both ways. A plate-less bundle's top-level call is stripped for these checks.
+- `cylinder_wrap_text()` in the template's `lib/helpers.scad`: text wrapped around a cylinder,
+  strip by strip, with the font's real spacing and no `textmetrics()`; engraved, embossed or inlay
+  through its radial extent. Recipe in the new `docs/openscad/text-on-curved-surfaces.md`.
+- `CLAUDE.md`: write multi-line scripts to a file instead of a heredoc, assert-once patch
+  scripts, raw strings can't end in a backslash, stale VS Code OpenSCAD diagnostics.
+
 ## [1.2.0] - 2026-09-24
 
 ### Added
@@ -112,7 +132,8 @@ a two-color label and a hanging arc).
   root project and `examples/demo` on every push, pull request and published release, using
   **OpenSCAD Nightly** (`openscad-nightly` from the official OBS apt repo).
 
-[Unreleased]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/emanuelmoniz/Makerworld-PMM_Open-SCAD-Boilerplate/releases/tag/v1.0.0

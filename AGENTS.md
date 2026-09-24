@@ -72,7 +72,8 @@ argument.
 To preview one part, open `parts/<name>.scad` in OpenSCAD: its `BUILD:EXCLUDE` block renders it
 standalone. There is no package manager. The test suite is `scripts/check/`: freshness (the
 tracked bundle and the generated parameter tables match the sources), lint, and smoke (every
-plate built from the shipped bundle, with the defaults and with every `SMOKE_VARIANTS` set).
+plate built from the shipped bundle, with the defaults and with every `SMOKE_VARIANTS` set, plus
+the `CLEARANCE_CHECKS` interference tests).
 
 ## Standing directives
 
@@ -89,7 +90,8 @@ Do all four, in the same turn as the change:
    hand-edit anything in `dist/` except `makerworld_listing.md`.
 2. **Run the checks**: `scripts/check/check.sh`. A STALE freshness result, a lint ERROR or a smoke
    failure is a blocker. Fix it or report it; don't leave it silently. A new option or size range
-   gets a `SMOKE_VARIANTS` entry (`scripts/project_config.sh`) that exercises it.
+   gets a `SMOKE_VARIANTS` entry (`scripts/project_config.sh`) that exercises it; a new moving or
+   mating part gets a `CLEARANCE_CHECKS` entry proving it clears (or holds).
 3. **Update both READMEs** with whatever is newly relevant: `README.md` (keep the
    `BUNDLE-DESCRIPTION` span accurate, since it ships inside the bundle) and
    `dist/makerworld_listing.md`. The **parameter tables** in both (between the

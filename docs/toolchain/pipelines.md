@@ -111,6 +111,11 @@ plate from it.
   parameter overrides (`"name|a=1; b=\"x\""`, one `-D` per assignment): extreme sizes, every
   dropdown option, optional features on and off. There an empty plate or preview is reported,
   not failed, since a variant may switch a part off.
+  With the defaults and with every variant, each **`CLEARANCE_CHECKS`** entry
+  (`"name|expression A|expression B|empty"` or `...|solid"`) intersects two expressions evaluated
+  in the shipped bundle and expects nothing (they never touch: a lid slides in, a moving part
+  clears the body) or something (they must touch: a lip holds, a latch blocks). Place the parts in
+  their assembled pose, as the assembled views do.
 
 Run after every build, before releases, and in CI. `.github/workflows/check.yml` builds the dev
 bundle and runs these checks (without running the MakerWorld build first, which would hide a
@@ -122,10 +127,21 @@ official OBS apt repo), the same kind of build PMM uses.
 
 `scripts\render.bat` · `scripts/render/render.sh [-p dir] [-c config]` → `renders/{parts,assembly}/`
 
-One PNG per target × perspective × aspect ratio. The camera is fitted to the sphere
-circumscribing each model's bounding box (via a throwaway STL and `scripts/shared/stl_bbox.py`),
-so no perspective crops. OpenSCAD's own `--viewall` crops elongated models in mismatched aspect
-ratios. **Agents never render unless asked** (AGENTS.md).
+One PNG per target × perspective × aspect ratio, from a throwaway STL of each target. OpenSCAD's
+own `--viewall` crops elongated models in mismatched aspect ratios, so the camera is placed
+explicitly, as `RENDER_FIT` (`render_config.sh`) says:
+
+- **`tight`** (template default): per perspective and ratio, `scripts/shared/render_fit.py`
+  projects every mesh vertex into OpenSCAD's view space and fits the camera to the model's actual
+  outline, centered. The limiting side of the frame is filled to `1 / (1 + RENDER_MARGIN)` (91% at
+  0.1). Measured on the demo: 91% on every view and ratio, where the sphere fit gave 58–84%.
+- **`sphere`**: fits the sphere circumscribing the bounding box (`scripts/shared/stl_bbox.py`).
+  The same scale from every angle, handy for comparing views, but tall or long models come out
+  small.
+
+View space, as OpenSCAD's `--camera` uses it: rotation `[0,0,0]` is the top view, and the scene
+turns by the inverse of the camera rotation (`render_fit.py`'s header has the details).
+**Agents never render unless asked** (AGENTS.md).
 
 ## 3MF export (optional, Bambu Studio)
 

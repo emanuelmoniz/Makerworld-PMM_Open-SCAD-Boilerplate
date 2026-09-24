@@ -66,6 +66,27 @@ module rounded_block(size, r = 0) {
         }
     }
 }
+module cylinder_wrap_text(txt, size, font, r, r0, r1, center_angle = 270, z = 0,
+                          max_width = undef, advance = 1.0) {
+    slice_w = min(1.5, max(0.3, size / 8));
+    width = min(len(txt) * size * advance,
+                is_undef(max_width) ? 2 * PI * r - 2 * slice_w : max_width);
+    n = ceil(width / slice_w);
+    for (i = [0 : n - 1]) {
+        x = (i + 0.5) * slice_w - width / 2;
+        rotate([0, 0, center_angle + x / r * 180 / PI])
+            translate([r0, 0, z])
+                rotate([90, 0, 90])
+                    linear_extrude(r1 - r0)
+                        translate([-x, 0])
+                            intersection() {
+                                text(txt, size = size, font = font,
+                                     halign = "center", valign = "center");
+                                translate([x - slice_w / 2 - 0.025, -size * 2])
+                                    square([slice_w + 0.05, size * 4]);
+                            }
+    }
+}
 
 // ---- from parts/part_template.scad ----
 module part_template(size = [size_x, size_y, size_z], r = effective_radius) {

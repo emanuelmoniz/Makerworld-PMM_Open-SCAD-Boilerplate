@@ -24,6 +24,13 @@
 #      off. Same failures as stage 2; an empty plate or preview is reported,
 #      not failed, since a variant may switch a part off.
 #
+#   CLEARANCE CHECKS -- with the defaults and with every variant, each
+#      CLEARANCE_CHECKS entry (scripts/project_config.sh) intersects two
+#      OpenSCAD expressions evaluated in the shipped bundle and expects the
+#      result to be "empty" (they never touch: a moving part clears the
+#      body, a lid slides in) or "solid" (they do: a latch holds, a peg
+#      blocks). Catches collisions no plate-size check can see.
+#
 # OpenSCAD WARNINGs are printed but do not fail the check; ERRORs and
 # failed exports do. Uses a full CGAL/Manifold render, so it takes as long
 # as rendering every part once.
@@ -154,6 +161,38 @@ check_outputs() {
     fi
 }
 
+# Runs every CLEARANCE_CHECKS entry ("name|expression A|expression B|empty
+# or solid") against the shipped bundle, with the given OpenSCAD args.
+# $1 is a tag for the messages ("" = defaults).
+check_clearances() {
+    local tag="$1"; shift
+    local pre=""
+    [ -n "$tag" ] && pre="[$tag] "
+    local entry name rest a b expect wrapper got
+    for entry in "${CLEARANCE_CHECKS[@]}"; do
+        IFS='|' read -r name a b expect <<< "$entry"
+        expect="$(echo "$expect" | tr -d '[:space:]')"
+        if [ "$expect" != "empty" ] && [ "$expect" != "solid" ]; then
+            echo "  FAIL   CLEARANCE_CHECKS \"$name\": last field must be empty or solid"
+            failures=$((failures + 1)); continue
+        fi
+        wrapper="$WORKDIR/clearance.scad"
+        printf 'include <%s>\nintersection() {\n    %s\n    %s\n}\n' "$clearance_bundle" "$a" "$b" > "$wrapper"
+        export_stl clearance "$wrapper" "$WORKDIR/clearance.stl" "$@"
+        case $? in
+            0) got="solid" ;;
+            2) got="empty" ;;
+            *) echo "  FAIL   ${pre}clearance: $name (did not compile)"; failures=$((failures + 1)); continue ;;
+        esac
+        if [ "$got" = "$expect" ]; then
+            echo "  ok     ${pre}clearance: $name ($got)"
+        else
+            echo "  FAIL   ${pre}clearance: $name -- expected $expect, got $got"
+            failures=$((failures + 1))
+        fi
+    done
+}
+
 echo "== Stage 2: shipped bundle ($BUNDLE)"
 if [ ! -f "$BUNDLE" ]; then
     echo "  FAIL   bundle missing -- run the MakerWorld build first"
@@ -176,7 +215,18 @@ else
         has_views=1
     fi
 
+    # Clearance checks include the bundle: a plate-less bundle's own
+    # top-level call would add its part to every intersection, so they use
+    # a copy without that line.
+    clearance_bundle="$abs_bundle"
+    if [ -n "${CLEARANCE_CHECKS[*]:-}" ] && [ -z "$plates" ] && [ -n "${MAKERWORLD_TOP_LEVEL_CALL:-}" ]; then
+        grep -vxF "$MAKERWORLD_TOP_LEVEL_CALL" "$BUNDLE" > "$WORKDIR/bundle_no_call.scad"
+        clearance_bundle="$WORKDIR/bundle_no_call.scad"
+        command -v cygpath >/dev/null 2>&1 && clearance_bundle="$(cygpath -m "$clearance_bundle")"
+    fi
+
     check_outputs ""
+    [ -n "${CLEARANCE_CHECKS[*]:-}" ] && check_clearances ""
 
     # ---- Stage 3: parameter variants (SMOKE_VARIANTS) ----
     # Entry: "name|param=value; param=value; ...". Each assignment becomes
@@ -192,6 +242,7 @@ else
                 [ -n "$a" ] && vargs+=(-D "$a")
             done
             check_outputs "$name" "${vargs[@]}"
+            [ -n "${CLEARANCE_CHECKS[*]:-}" ] && check_clearances "$name" "${vargs[@]}"
         done
     fi
 fi

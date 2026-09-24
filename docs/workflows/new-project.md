@@ -58,7 +58,8 @@ python scripts/shared/pmm_inventory.py
    ([add-a-part.md](add-a-part.md)). Then delete the template part.
 4. `assembly/assembly_main.scad`: compose the parts, and write one `mw_plate_N()` per plate.
 5. `scripts/project_config.sh`: `SOURCE_FILES`, `DEV_VIEWS`, `BUNDLED_LIBRARIES` (remove unused),
-   `COLOR_PASSTHROUGH`, and `SMOKE_VARIANTS` (the extremes the smoke check should build).
+   `COLOR_PASSTHROUGH`, `SMOKE_VARIANTS` (the extremes the smoke check should build) and
+   `CLEARANCE_CHECKS` (the fits and moving parts it should prove).
 6. `scripts/plates_config.sh`: `PLATE_NAMES`, `PLATE_N_PARTS`, `PRINTER`.
 7. `scripts/render_config.sh`: `TARGETS`.
 

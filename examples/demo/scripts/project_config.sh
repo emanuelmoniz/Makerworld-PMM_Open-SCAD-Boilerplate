@@ -133,3 +133,16 @@ SMOKE_VARIANTS=(
     "no label|label_style=\"none\""
     "embossed label|label_style=\"embossed\"; label_text=\"SPICES & HERBS\"; label_size=30"
 )
+
+# ---- 10. CLEARANCE CHECKS -------------------------------------------------
+# "name|expression A|expression B|empty or solid": the smoke check
+# intersects A and B (evaluated in the shipped bundle, so every module and
+# variable is available) with the defaults and with every SMOKE_VARIANTS
+# set, and expects the result to be empty (they never touch) or solid (they
+# must touch). Use it for what a size check can't see: a moving part clears
+# the body, a lid slides in with its clearance, a latch or lip holds.
+# Place parts in their assembled pose, as the assembled views do.
+CLEARANCE_CHECKS=(
+    "lid slides in freely|box_body();|translate([lid_x, lid_y, lid_z]) sliding_lid_body();|empty"
+    "lid is held by the lip|box_body();|translate([lid_x, lid_y, lid_z + 1]) sliding_lid_body();|solid"
+)

@@ -62,9 +62,17 @@ ASPECT_RATIOS=(
 RENDER_WIDTH=1600
 
 # ---- 6. FIT & MARGIN ------------------------------------------------------
-# render.sh fits the camera to the sphere circumscribing each model's
-# bounding box (never crops, at any angle). RENDER_MARGIN adds breathing
-# room as a fraction of that distance; RENDER_FOV is OpenSCAD's $vpf.
+# RENDER_FIT: how render.sh places the camera.
+#   "tight"  (default here) per perspective and ratio, fit the model's
+#            actual outline, centered: it fills the frame up to the margin
+#            (scripts/shared/render_fit.py). Best for listing images.
+#   "sphere" fit the sphere circumscribing the bounding box: the same scale
+#            from every angle (handy for comparing views side by side), but
+#            a tall or long model comes out small.
+# RENDER_MARGIN adds breathing room as a fraction of the camera distance
+# (0.1 -> the model spans 1/1.1 = 91% of the frame's limiting side);
+# RENDER_FOV is OpenSCAD's $vpf.
+RENDER_FIT="tight"
 RENDER_MARGIN=0.1
 RENDER_FOV=22.5
 RENDER_COLORSCHEME="Tomorrow"

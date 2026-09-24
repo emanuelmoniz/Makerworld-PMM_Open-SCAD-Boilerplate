@@ -34,6 +34,11 @@
 *Example:* `examples/demo/lib/params.scad` → `groove_height = lid_thickness + 2 * lid_clearance`.
 The lid stays `lid_thickness`.
 
+**Prove it** with a `CLEARANCE_CHECKS` entry (`scripts/project_config.sh`): the smoke check
+intersects the two parts in their assembled pose and expects nothing, at every smoke variant. The
+demo checks both sides of its fit: the lid slides in (`empty`), and lifted 1 mm it hits the lip
+that holds it (`solid`).
+
 ## 3. Manifold safety
 
 - **No coincident faces.** Every cut overshoots the surface it opens (`+1`, `-0.01` …) so no
