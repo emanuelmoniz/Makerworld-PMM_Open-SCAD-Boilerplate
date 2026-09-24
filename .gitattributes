@@ -14,6 +14,7 @@
 * text=auto
 
 *.sh    text eol=lf
+.githooks/*  text eol=lf     # hooks run in bash; no extension, so matched by path
 *.py    text eol=lf
 *.ps1   text eol=crlf
 *.bat   text eol=crlf
